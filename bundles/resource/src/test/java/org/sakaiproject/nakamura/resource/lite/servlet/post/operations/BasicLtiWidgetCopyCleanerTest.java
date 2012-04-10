@@ -53,19 +53,35 @@ public class BasicLtiWidgetCopyCleanerTest {
   private static final String NAMESPACE = "/tests/org/sakaiproject/nakamura/resource/lite/" +
       "servlet/post/operations/BasicLtiWidgetCopyCleanerTest";
   
+  /**
+   * Verify that when the destination does not exist, there is nothing to clean. Therefore, no
+   * changes to the data-store should be reported.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testNothingToClean() throws Exception {
     String from = namespace("testNothingToClean/from");
     String to = namespace("testNothingToClean/to");
-    BasicLtiWidgetCopyCleaner cleaner = createCleaner();
+    AbstractBasicLtiCleaner cleaner = createCleaner();
     
-    List<Modification> modifications = cleaner.clean(from, to, createContentManager(cleaner.repository, "test"));
+    List<Modification> modifications = cleaner.clean(from, to, createContentManager(cleaner.getRepository(), "test"));
     Assert.assertNotNull(modifications);
     Assert.assertEquals(0, modifications.size());
   }
   
+  /**
+   * Verify that the protected keys are indeed copied from the source location to the destination.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testProtectedKeysAreCopied() throws Exception {
+    AbstractBasicLtiCleaner cleaner = createCleaner();
+    doTestProtectedKeysAreCopied(cleaner);
+  }
+  
+  protected void doTestProtectedKeysAreCopied(AbstractBasicLtiCleaner cleaner) throws Exception {
     String root = namespace("testProtectedKeysAreCopied");
     String from = namespace("testProtectedKeysAreCopied/from");
     String to = namespace("testProtectedKeysAreCopied/to");
@@ -73,14 +89,13 @@ public class BasicLtiWidgetCopyCleanerTest {
     String ltiPathTo = StorageClientUtils.newPath(to, "id2207414/basiclti");
     String ltiKeysPathRelative = "id2207414/basiclti/ltiKeys";
     
-    BasicLtiWidgetCopyCleaner cleaner = createCleaner();
-    ContentManager adminContentManager = createContentManager(cleaner.repository, null);
-    ContentManager testContentManager = createContentManager(cleaner.repository, "test");
+    ContentManager adminContentManager = createContentManager(cleaner.getRepository(), null);
+    ContentManager testContentManager = createContentManager(cleaner.getRepository(), "test");
     
     // allow read/write for the "test" user on the root content node
     Session adminSession = null;
     try {
-      adminSession = cleaner.repository.loginAdministrative();
+      adminSession = cleaner.getRepository().loginAdministrative();
       adminSession.getAccessControlManager().setAcl(Security.ZONE_CONTENT, root,
           new AclModification[] { new AclModification(AclModification.grantKey("test"),
               Permissions.CAN_WRITE.getPermission(), Operation.OP_REPLACE) });
@@ -94,14 +109,11 @@ public class BasicLtiWidgetCopyCleanerTest {
     ContentUtils.createContentFromJsonResource(adminContentManager, from, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyCleanerTest1.json");
     
-    
     // second, lock down the ltiKeys
     String ltiKeysFrom = StorageClientUtils.newPath(from, ltiKeysPathRelative);
-    accessControlSensitiveNode(ltiKeysFrom, cleaner.repository, "test");
-    
+    accessControlSensitiveNode(ltiKeysFrom, cleaner.getRepository(), "test");
     
     // third, copy it to the 'to' path as the unprivileged user
-    
     // little permission sanity check, verify the 'test' user cannot access the source keys
     boolean hasAccess = true;
     try {
@@ -113,10 +125,8 @@ public class BasicLtiWidgetCopyCleanerTest {
     Assert.assertFalse(hasAccess);
     runCopyOperation(from, to, testContentManager);
     
-    
     // fourth, clean it up as the unprivileged user
     cleaner.clean(ltiPathFrom, ltiPathTo, testContentManager);
-    
     
     // finally, verify that the keys were copied and are in tact
     String ltiKeysTo = StorageClientUtils.newPath(to, ltiKeysPathRelative);
@@ -171,14 +181,14 @@ public class BasicLtiWidgetCopyCleanerTest {
     op.doRun(request, response, contentManager, new LinkedList<Modification>(), to);
   }
   
-  private BasicLtiWidgetCopyCleaner createCleaner() throws ClientPoolException, StorageClientException,
+  protected AbstractBasicLtiCleaner createCleaner() throws ClientPoolException, StorageClientException,
       AccessDeniedException, ClassNotFoundException, IOException {
     BasicLtiWidgetCopyCleaner cleaner = new BasicLtiWidgetCopyCleaner();
     cleaner.repository = createRepository();
     return cleaner;
   }
   
-  private Repository createRepository() throws ClientPoolException, AccessDeniedException,
+  protected Repository createRepository() throws ClientPoolException, AccessDeniedException,
       StorageClientException, ClassNotFoundException, IOException {
     Repository repo = new BaseMemoryRepository().getRepository();
     repo.loginAdministrative().getAuthorizableManager().createUser("test", "test", "test", new HashMap<String, Object>());
@@ -194,7 +204,7 @@ public class BasicLtiWidgetCopyCleanerTest {
     }
   }
   
-  private String namespace(String path) {
+  protected String namespace(String path) {
     return String.format("%s/%s", NAMESPACE, path);
   }
 }

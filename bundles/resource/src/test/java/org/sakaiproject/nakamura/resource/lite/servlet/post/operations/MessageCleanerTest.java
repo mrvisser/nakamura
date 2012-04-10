@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * Verify the operation of the MessageCopyCleaner.
  */
-public class MessageCopyCleanerTest {
+public class MessageCleanerTest {
 
   private static final String NAMESPACE = "/tests/org/sakaiproject/nakamura/resource/lite/" +
       "servlet/post/operations/MessageCopyCleanerTest";
@@ -57,7 +57,7 @@ public class MessageCopyCleanerTest {
   public void testNothingToClean() throws Exception {
     String from = namespace("testNothingToClean/from");
     String to = namespace("testNothingToClean/to");
-    MessageCopyCleaner cleaner = createCleaner();
+    MessageCleaner cleaner = createCleaner();
     
     List<Modification> modifications = cleaner.clean(from, to, createContentManager(cleaner.repository, "test"));
     Assert.assertNotNull(modifications);
@@ -73,7 +73,7 @@ public class MessageCopyCleanerTest {
   @Test
   public void testCleanSakaiMessagestore() throws Exception {
     String path = namespace("testNothingToClean/content");
-    MessageCopyCleaner cleaner = createCleaner();
+    MessageCleaner cleaner = createCleaner();
     ContentManager contentManager = createContentManager(cleaner.repository, null);
     ContentUtils.createContentFromJsonResource(contentManager, path, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyCleanerTest1.json");
@@ -99,7 +99,7 @@ public class MessageCopyCleanerTest {
   @Test
   public void testCleanUnprivileged() throws Exception {
     String path = namespace("testNothingToClean/content");
-    MessageCopyCleaner cleaner = createCleaner();
+    MessageCleaner cleaner = createCleaner();
     ContentManager contentManager = createContentManager(cleaner.repository, null);
     ContentUtils.createContentFromJsonResource(contentManager, path, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyCleanerTest1.json");
@@ -134,9 +134,9 @@ public class MessageCopyCleanerTest {
     return Thread.currentThread().getContextClassLoader();
   }
   
-  private MessageCopyCleaner createCleaner() throws ClientPoolException, StorageClientException,
+  private MessageCleaner createCleaner() throws ClientPoolException, StorageClientException,
       AccessDeniedException, ClassNotFoundException, IOException {
-    MessageCopyCleaner cleaner = new MessageCopyCleaner();
+    MessageCleaner cleaner = new MessageCleaner();
     cleaner.repository = createRepository();
     return cleaner;
   }

@@ -17,6 +17,12 @@
  */
 package org.sakaiproject.nakamura.resource.lite.servlet.post.operations;
 
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Property;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
+import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.servlets.HtmlResponse;
 import org.apache.sling.servlets.post.Modification;
@@ -27,6 +33,7 @@ import org.sakaiproject.nakamura.api.lite.content.ActionRecord;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.resource.CopyCleaner;
 import org.sakaiproject.nakamura.api.resource.lite.AbstractSparsePostOperation;
+import org.sakaiproject.nakamura.api.resource.lite.SparsePostOperation;
 import org.sakaiproject.nakamura.util.PathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +43,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Component
+@Service(value = SparsePostOperation.class)
+@Reference(name = "copyCleaners",
+    cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE,
+    policy = ReferencePolicy.DYNAMIC,
+    referenceInterface = CopyCleaner.class,
+    bind = "bindCleaner", unbind = "unbindCleaner")
+@Property(name = "sling.post.operation", value = "copy")
 public class CopyOperation extends AbstractSparsePostOperation {
   private final static Logger LOGGER = LoggerFactory.getLogger(CopyOperation.class);
   public final static String PROP_SOURCE = ":from";

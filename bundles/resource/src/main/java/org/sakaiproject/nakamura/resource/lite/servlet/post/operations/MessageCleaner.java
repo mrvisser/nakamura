@@ -29,6 +29,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.resource.CopyCleaner;
+import org.sakaiproject.nakamura.api.resource.MoveCleaner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ import java.util.List;
 
 /**
  * <p>
- * The MessageCopyCleaner class verifies that loosely-dependent properties of messages are reset
+ * The MessageCleaner class verifies that loosely-dependent properties of messages are reset
  * to appropriate values when messages are copied from one location to another. One concrete
  * example is when a sakai/message node references its parent "sakai:messagestore" path. After
  * a messagestore and all its messages are copied, the child messages may no longer reference the
@@ -79,10 +80,10 @@ import java.util.List;
  *  
  */
 @Component
-@Service
-public class MessageCopyCleaner implements CopyCleaner {
+@Service(value={ CopyCleaner.class, MoveCleaner.class })
+public class MessageCleaner implements CopyCleaner, MoveCleaner {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(MessageCopyCleaner.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MessageCleaner.class);
   private static final String MESSAGESTORE_PROP = "sakai:messagestore";
   private static final String MESSAGE_RESOURCE_TYPE = "sakai/message";
   private static final String MESSAGESTORE_RESOURCE_TYPE = "sakai/messagestore";

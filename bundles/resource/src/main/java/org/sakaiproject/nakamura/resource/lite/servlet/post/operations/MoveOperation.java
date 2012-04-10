@@ -17,9 +17,6 @@
  */
 package org.sakaiproject.nakamura.resource.lite.servlet.post.operations;
 
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
@@ -38,6 +35,10 @@ import org.sakaiproject.nakamura.api.resource.MoveCleaner;
 import org.sakaiproject.nakamura.api.resource.lite.AbstractSparsePostOperation;
 import org.sakaiproject.nakamura.api.resource.lite.SparsePostOperation;
 import org.sakaiproject.nakamura.util.PathUtils;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Component
 @Service(value = SparsePostOperation.class)
@@ -79,17 +80,22 @@ public class MoveOperation extends AbstractSparsePostOperation {
       changes.add(Modification.onMoved(move.getFrom(), move.getTo()));
     }
 
+    List<Modification> moveChanges = new LinkedList<Modification>();
     // if there are cleaners, see if one can handle this content
     if (!moveCleaners.isEmpty()) {
       // get the content from the new location and clean it before returning
       for (MoveCleaner cleaner : moveCleaners) {
-        // consult each cleaner and collect the modifications
-        List<Modification> mods = cleaner.clean(from, to, contentManager);
-        if (mods != null) {
-          changes.addAll(mods);
+        for (Modification change : changes) {
+          // consult each cleaner and collect the modifications
+          List<Modification> mods = cleaner.clean(change.getSource(), change.getDestination(), contentManager);
+          if (mods != null) {
+            moveChanges.addAll(mods);
+          }
         }
       }
     }
+    
+    changes.addAll(moveChanges);
   }
 
   // ---------- SCR integration ----------
