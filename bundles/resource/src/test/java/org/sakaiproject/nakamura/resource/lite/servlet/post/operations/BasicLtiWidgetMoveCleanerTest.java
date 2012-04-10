@@ -20,6 +20,8 @@ package org.sakaiproject.nakamura.resource.lite.servlet.post.operations;
 import junit.framework.Assert;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -31,6 +33,7 @@ import java.io.IOException;
  * BasicLtiWidgetCopyCleanerTest, so it may simply extend it and perform whatever additional
  * assertions are necessary.
  */
+@RunWith(value = MockitoJUnitRunner.class)
 public class BasicLtiWidgetMoveCleanerTest extends BasicLtiWidgetCopyCleanerTest {
 
   private static final String NAMESPACE = "/tests/org/sakaiproject/nakamura/resource/lite/" +

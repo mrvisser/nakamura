@@ -23,6 +23,7 @@ import junit.framework.Assert;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HtmlResponse;
 import org.apache.sling.servlets.post.Modification;
 import org.junit.Test;
@@ -33,24 +34,47 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.SessionAdaptable;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AclModification.Operation;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
-import org.sakaiproject.nakamura.api.lite.authorizable.Group;
-import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
+import org.sakaiproject.nakamura.resource.lite.SparsePostOperationServiceImpl;
 import org.sakaiproject.nakamura.util.ContentUtils;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.AccessControlException;
 import java.util.LinkedList;
+
+import javax.jcr.Credentials;
+import javax.jcr.InvalidItemStateException;
+import javax.jcr.InvalidSerializedDataException;
+import javax.jcr.Item;
+import javax.jcr.ItemExistsException;
+import javax.jcr.ItemNotFoundException;
+import javax.jcr.LoginException;
+import javax.jcr.NamespaceException;
+import javax.jcr.Node;
+import javax.jcr.PathNotFoundException;
+import javax.jcr.Property;
+import javax.jcr.ReferentialIntegrityException;
+import javax.jcr.RepositoryException;
+import javax.jcr.UnsupportedRepositoryOperationException;
+import javax.jcr.ValueFactory;
+import javax.jcr.Workspace;
+import javax.jcr.lock.LockException;
+import javax.jcr.nodetype.ConstraintViolationException;
+import javax.jcr.nodetype.NoSuchNodeTypeException;
+import javax.jcr.retention.RetentionManager;
+import javax.jcr.security.AccessControlManager;
+import javax.jcr.version.VersionException;
 
 /**
  * A series of tests to verify the functionality of the CopyOperation.
@@ -65,6 +89,12 @@ public class CopyOperationTest {
   SlingHttpServletRequest request;
   
   @Mock
+  ResourceResolver resourceResolver;
+  
+  @Mock
+  MockableJcrSessionSessionAdaptable sessionAdaptable;
+  
+  @Mock
   HtmlResponse response;
   
   @Test(expected=StorageClientException.class)
@@ -72,9 +102,14 @@ public class CopyOperationTest {
     String fromPath = namespace("testSourceNonExistent/from");
     String toPath = namespace("testSourceNonExistent/to");
     
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
-    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
+    createCopyOperation().doRun(request, response, adminSession.getContentManager(),
+        new LinkedList<Modification>(), toPath);
   }
   
   @Test(expected=StorageClientException.class)
@@ -82,11 +117,15 @@ public class CopyOperationTest {
     String fromPath = namespace("testCannotReplace/from");
     String toPath = namespace("testCannotReplace/to");
     
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
     contentManager.update(new Content(toPath, ImmutableMap.<String, Object>of("prop", "destination")));
     
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     
     createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
   }
@@ -96,12 +135,16 @@ public class CopyOperationTest {
     String fromPath = namespace("testCanReplaceDeletedNode/from");
     String toPath = namespace("testCanReplaceDeletedNode/to");
     
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
     contentManager.update(new Content(toPath, ImmutableMap.<String, Object>of("prop", "destination")));
     contentManager.delete(toPath);
     
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     
     try {
       createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
@@ -116,9 +159,13 @@ public class CopyOperationTest {
     String fromPath = namespace("testCopySimple/from");
     String toPath = namespace("testCopySimple/to");
     
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
     
     //first verify the source
@@ -137,7 +184,8 @@ public class CopyOperationTest {
     String fromPath = namespace("testCopySimpleStream/from");
     String toPath = namespace("testCopySimpleStream/to");
     
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
     
     InputStream in = new ByteArrayInputStream("source".getBytes("UTF-8"));
@@ -145,6 +193,9 @@ public class CopyOperationTest {
     in.close();
     
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
     
     //first verify the source
@@ -170,11 +221,15 @@ public class CopyOperationTest {
   public void testCopyTree() throws Exception {
     String fromPath = namespace("testCopyTree/from");
     String toPath = namespace("testCopyTree/to");
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     ContentUtils.createContentFromJsonResource(contentManager, fromPath, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyOperationTest1.json");
     
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
     
     String pagePath = StorageClientUtils.newPath(toPath, "id4962581");
@@ -196,7 +251,8 @@ public class CopyOperationTest {
   @Test
   public void testInternalCreateTree() throws Exception {
     String path = namespace("testInternalCreateTree/content");
-    ContentManager contentManager = createRepository().loginAdministrative().getContentManager();
+    Session adminSession = createRepository().loginAdministrative();
+    ContentManager contentManager = adminSession.getContentManager();
     ContentUtils.createContentFromJsonResource(contentManager, path, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyOperationTest1.json");
     
@@ -222,7 +278,9 @@ public class CopyOperationTest {
   }
   
   private CopyOperation createCopyOperation() {
-    return new CopyOperation();
+    CopyOperation copyOperation = new CopyOperation();
+    copyOperation.sparsePostOperationService = new SparsePostOperationServiceImpl();
+    return copyOperation;
   }
   
   private Repository createRepository() throws ClientPoolException, StorageClientException, AccessDeniedException, ClassNotFoundException, IOException {
@@ -232,4 +290,5 @@ public class CopyOperationTest {
   private String namespace(String path) {
     return String.format("%s/%s", NAMESPACE, path);
   }
+
 }

@@ -18,11 +18,15 @@
 package org.sakaiproject.nakamura.resource.lite.servlet.post.operations;
 
 import org.apache.sling.api.SlingHttpServletRequest;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.servlets.HtmlResponse;
 import org.apache.sling.servlets.post.Modification;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -38,6 +42,7 @@ import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
+import org.sakaiproject.nakamura.resource.lite.SparsePostOperationServiceImpl;
 import org.sakaiproject.nakamura.util.ContentUtils;
 
 import java.io.IOException;
@@ -48,10 +53,23 @@ import java.util.List;
 /**
  * Verifies the functionality of the BasicLtiWidgetCopyCleaner class.
  */
+@RunWith(value = MockitoJUnitRunner.class)
 public class BasicLtiWidgetCopyCleanerTest {
 
   private static final String NAMESPACE = "/tests/org/sakaiproject/nakamura/resource/lite/" +
       "servlet/post/operations/BasicLtiWidgetCopyCleanerTest";
+
+  @Mock
+  SlingHttpServletRequest request;
+  
+  @Mock
+  ResourceResolver resourceResolver;
+  
+  @Mock
+  MockableJcrSessionSessionAdaptable sessionAdaptable;
+  
+  @Mock
+  HtmlResponse response;
   
   /**
    * Verify that when the destination does not exist, there is nothing to clean. Therefore, no
@@ -89,21 +107,16 @@ public class BasicLtiWidgetCopyCleanerTest {
     String ltiPathTo = StorageClientUtils.newPath(to, "id2207414/basiclti");
     String ltiKeysPathRelative = "id2207414/basiclti/ltiKeys";
     
-    ContentManager adminContentManager = createContentManager(cleaner.getRepository(), null);
-    ContentManager testContentManager = createContentManager(cleaner.getRepository(), "test");
+    Session adminSession = cleaner.getRepository().loginAdministrative();
+    Session testSession = cleaner.getRepository().loginAdministrative("test");
+    ContentManager adminContentManager = adminSession.getContentManager();
+    ContentManager testContentManager = testSession.getContentManager();
     
     // allow read/write for the "test" user on the root content node
-    Session adminSession = null;
-    try {
-      adminSession = cleaner.getRepository().loginAdministrative();
-      adminSession.getAccessControlManager().setAcl(Security.ZONE_CONTENT, root,
-          new AclModification[] { new AclModification(AclModification.grantKey("test"),
-              Permissions.CAN_WRITE.getPermission(), Operation.OP_REPLACE) });
-    } finally {
-      if (adminSession != null) {
-        adminSession.logout();
-      }
-    }
+    adminSession = cleaner.getRepository().loginAdministrative();
+    adminSession.getAccessControlManager().setAcl(Security.ZONE_CONTENT, root,
+        new AclModification[] { new AclModification(AclModification.grantKey("test"),
+            Permissions.CAN_WRITE.getPermission(), Operation.OP_REPLACE) });
     
     // first, load the data to copy into the "from" path
     ContentUtils.createContentFromJsonResource(adminContentManager, from, getClassLoader(),
@@ -123,7 +136,7 @@ public class BasicLtiWidgetCopyCleanerTest {
       hasAccess = false;
     }
     Assert.assertFalse(hasAccess);
-    runCopyOperation(from, to, testContentManager);
+    runCopyOperation(from, to, testSession);
     
     // fourth, clean it up as the unprivileged user
     cleaner.clean(ltiPathFrom, ltiPathTo, testContentManager);
@@ -172,13 +185,13 @@ public class BasicLtiWidgetCopyCleanerTest {
     return Thread.currentThread().getContextClassLoader();
   }
   
-  private void runCopyOperation(String from, String to, ContentManager contentManager)
+  protected void runCopyOperation(String from, String to, Session session)
       throws StorageClientException, AccessDeniedException, IOException {
-    CopyOperation op = new CopyOperation();
-    SlingHttpServletRequest request = Mockito.mock(SlingHttpServletRequest.class);
-    HtmlResponse response = Mockito.mock(HtmlResponse.class);
     Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(from);
-    op.doRun(request, response, contentManager, new LinkedList<Modification>(), to);
+    Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
+    Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
+    Mockito.when(sessionAdaptable.getSession()).thenReturn(session);
+    createCopyOperation().doRun(request, response, session.getContentManager(), new LinkedList<Modification>(), to);
   }
   
   protected AbstractBasicLtiCleaner createCleaner() throws ClientPoolException, StorageClientException,
@@ -193,6 +206,12 @@ public class BasicLtiWidgetCopyCleanerTest {
     Repository repo = new BaseMemoryRepository().getRepository();
     repo.loginAdministrative().getAuthorizableManager().createUser("test", "test", "test", new HashMap<String, Object>());
     return repo;
+  }
+  
+  private CopyOperation createCopyOperation() {
+    CopyOperation copyOperation = new CopyOperation();
+    copyOperation.sparsePostOperationService = new SparsePostOperationServiceImpl();
+    return copyOperation;
   }
   
   private ContentManager createContentManager(Repository repository, String userId) throws ClientPoolException,
