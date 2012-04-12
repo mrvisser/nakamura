@@ -25,6 +25,7 @@ import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.servlets.HtmlResponse;
 import org.apache.sling.servlets.post.Modification;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.resource.lite.AbstractSparsePostOperation;
@@ -39,7 +40,7 @@ import java.util.List;
 @Service(value = SparsePostOperation.class)
 @Property(name = "sling.post.operation", value = "copy")
 public class CopyOperation extends AbstractSparsePostOperation {
-  public final static String PROP_SOURCE = ":from";
+  public final static String PROP_DEST = ":dest";
   
   @Reference
   protected SparsePostOperationService sparsePostOperationService;
@@ -48,13 +49,22 @@ public class CopyOperation extends AbstractSparsePostOperation {
   protected void doRun(SlingHttpServletRequest request, HtmlResponse response,
       ContentManager contentManager, List<Modification> changes, String contentPath)
       throws StorageClientException, AccessDeniedException, IOException {
-    String from = getSource(request);
-    String to = contentPath;
+    String from = contentPath;
+    String to = getDestination(from, request);
+    
+    if (to == null) {
+      throw new IllegalArgumentException(String.format("Must supply parameter %s to set copy destination.", PROP_DEST));
+    }
+    
     changes.addAll(sparsePostOperationService.copy(adaptToSession(request), from, to));
   }
 
-  private String getSource(SlingHttpServletRequest request) {
-    return PathUtils.toUserContentPath(request.getParameter(PROP_SOURCE));
+  private String getDestination(String from, SlingHttpServletRequest request) {
+    String to = request.getParameter(PROP_DEST);
+    if (to == null) {
+      return null;
+    }
+    return PathUtils.toUserContentPath(to);
   }
 
 }

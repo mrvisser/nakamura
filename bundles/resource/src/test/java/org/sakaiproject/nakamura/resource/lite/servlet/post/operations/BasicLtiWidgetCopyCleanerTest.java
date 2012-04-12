@@ -187,11 +187,11 @@ public class BasicLtiWidgetCopyCleanerTest {
   
   protected void runCopyOperation(String from, String to, Session session)
       throws StorageClientException, AccessDeniedException, IOException {
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(from);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(to);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(session);
-    createCopyOperation().doRun(request, response, session.getContentManager(), new LinkedList<Modification>(), to);
+    createCopyOperation().doRun(request, response, session.getContentManager(), new LinkedList<Modification>(), from);
   }
   
   protected AbstractBasicLtiCleaner createCleaner() throws ClientPoolException, StorageClientException,

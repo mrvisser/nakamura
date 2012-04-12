@@ -34,7 +34,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
-import org.sakaiproject.nakamura.api.lite.SessionAdaptable;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -43,38 +42,11 @@ import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 import org.sakaiproject.nakamura.resource.lite.SparsePostOperationServiceImpl;
 import org.sakaiproject.nakamura.util.ContentUtils;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.AccessControlException;
 import java.util.LinkedList;
-
-import javax.jcr.Credentials;
-import javax.jcr.InvalidItemStateException;
-import javax.jcr.InvalidSerializedDataException;
-import javax.jcr.Item;
-import javax.jcr.ItemExistsException;
-import javax.jcr.ItemNotFoundException;
-import javax.jcr.LoginException;
-import javax.jcr.NamespaceException;
-import javax.jcr.Node;
-import javax.jcr.PathNotFoundException;
-import javax.jcr.Property;
-import javax.jcr.ReferentialIntegrityException;
-import javax.jcr.RepositoryException;
-import javax.jcr.UnsupportedRepositoryOperationException;
-import javax.jcr.ValueFactory;
-import javax.jcr.Workspace;
-import javax.jcr.lock.LockException;
-import javax.jcr.nodetype.ConstraintViolationException;
-import javax.jcr.nodetype.NoSuchNodeTypeException;
-import javax.jcr.retention.RetentionManager;
-import javax.jcr.security.AccessControlManager;
-import javax.jcr.version.VersionException;
 
 /**
  * A series of tests to verify the functionality of the CopyOperation.
@@ -104,12 +76,12 @@ public class CopyOperationTest {
     
     Session adminSession = createRepository().loginAdministrative();
     
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     createCopyOperation().doRun(request, response, adminSession.getContentManager(),
-        new LinkedList<Modification>(), toPath);
+        new LinkedList<Modification>(), fromPath);
   }
   
   @Test(expected=StorageClientException.class)
@@ -122,12 +94,12 @@ public class CopyOperationTest {
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
     contentManager.update(new Content(toPath, ImmutableMap.<String, Object>of("prop", "destination")));
     
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     
-    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
   }
   
   @Test
@@ -141,13 +113,13 @@ public class CopyOperationTest {
     contentManager.update(new Content(toPath, ImmutableMap.<String, Object>of("prop", "destination")));
     contentManager.delete(toPath);
     
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
     
     try {
-      createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+      createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
     } catch (StorageClientException e) {
       Assert.fail("Was not able to copy into a node that was previously deleted.");
     }
@@ -162,11 +134,11 @@ public class CopyOperationTest {
     Session adminSession = createRepository().loginAdministrative();
     ContentManager contentManager = adminSession.getContentManager();
     contentManager.update(new Content(fromPath, ImmutableMap.<String, Object>of("prop", "source")));
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
-    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
     
     //first verify the source
     Content c = contentManager.get(fromPath);
@@ -192,11 +164,11 @@ public class CopyOperationTest {
     contentManager.writeBody(fromPath, in);
     in.close();
     
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
-    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
     
     //first verify the source
     Content c = contentManager.get(fromPath);
@@ -226,11 +198,11 @@ public class CopyOperationTest {
     ContentUtils.createContentFromJsonResource(contentManager, fromPath, getClassLoader(),
         "org/sakaiproject/nakamura/resource/lite/servlet/post/operations/CopyOperationTest1.json");
     
-    Mockito.when(request.getParameter(CopyOperation.PROP_SOURCE)).thenReturn(fromPath);
+    Mockito.when(request.getParameter(CopyOperation.PROP_DEST)).thenReturn(toPath);
     Mockito.when(request.getResourceResolver()).thenReturn(resourceResolver);
     Mockito.when(resourceResolver.adaptTo(javax.jcr.Session.class)).thenReturn(sessionAdaptable);
     Mockito.when(sessionAdaptable.getSession()).thenReturn(adminSession);
-    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), toPath);
+    createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
     
     String pagePath = StorageClientUtils.newPath(toPath, "id4962581");
     String editorPath = StorageClientUtils.newPath(pagePath, "editor");

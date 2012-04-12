@@ -68,8 +68,8 @@ public abstract class AbstractBasicLtiCleaner implements CopyCleaner, MoveCleane
   @Override
   public final List<Modification> clean(String fromPath, String toPath, ContentManager cm)
       throws StorageClientException, AccessDeniedException {
-    Content fromContent = cm.get(fromPath);
-    if (fromContent != null && isBasicLtiWidget(fromContent)) {
+    Content toContent = cm.get(toPath);
+    if (toContent != null && isBasicLtiWidget(toContent)) {
       return doClean(fromPath, toPath, cm);
     }
     return Collections.emptyList();
