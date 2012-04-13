@@ -175,7 +175,7 @@ import javax.servlet.http.HttpServletResponse;
           @ServiceResponse(code = HttpServletResponse.SC_INTERNAL_SERVER_ERROR, description = "Unable to delete the node due to a runtime error.")
         })
     })
-@SlingServlet(methods = { "GET", "POST", "PUT", "DELETE" }, resourceTypes = { "sakai/basiclti" })
+@SlingServlet(methods = { "GET", "PUT", "DELETE" }, resourceTypes = { "sakai/basiclti" })
 public class LiteBasicLTIConsumerServlet extends SlingAllMethodsServlet {
   private static final long serialVersionUID = 5985490994324951127L;
   private static final Logger LOG = LoggerFactory
