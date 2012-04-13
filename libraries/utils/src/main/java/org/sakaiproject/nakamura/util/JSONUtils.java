@@ -68,7 +68,8 @@ public class JSONUtils {
   }
 
   /**
-   * Given a JSONArray, extract its array elements into a Java array.
+   * Given a JSONArray, extract its array elements into a Java array. All elements of the
+   * array will be recursively converted to Java objects if they are JSON objects as well.
    * 
    * @param array
    * @return
@@ -91,7 +92,8 @@ public class JSONUtils {
   }
   
   /**
-   * Given a JSONObject, convert it into a java Map.
+   * Given a JSONObject, convert it into a java Map. All elements of the array will be
+   * recursively converted to Java objects if they are JSON objects as well.
    * 
    * @param json
    * @return

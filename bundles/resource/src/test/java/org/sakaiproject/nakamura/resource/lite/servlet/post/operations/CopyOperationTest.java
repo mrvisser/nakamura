@@ -69,6 +69,12 @@ public class CopyOperationTest {
   @Mock
   HtmlResponse response;
   
+  /**
+   * Verify that a StorageClientException is thrown when the source location of a copy operation
+   * does not exist.
+   * 
+   * @throws Exception
+   */
   @Test(expected=StorageClientException.class)
   public void testSourceNonExistent() throws Exception {
     String fromPath = namespace("testSourceNonExistent/from");
@@ -84,6 +90,12 @@ public class CopyOperationTest {
         new LinkedList<Modification>(), fromPath);
   }
   
+  /**
+   * Verify that a storage client exception is thrown when trying to copy to a location that
+   * already exists.
+   * 
+   * @throws Exception
+   */
   @Test(expected=StorageClientException.class)
   public void testCannotReplace() throws Exception {
     String fromPath = namespace("testCannotReplace/from");
@@ -102,6 +114,14 @@ public class CopyOperationTest {
     createCopyOperation().doRun(request, response, contentManager, new LinkedList<Modification>(), fromPath);
   }
   
+  /**
+   * Verify that if content used to exist in a location but has since deleted, it is still possible
+   * to copy to that location. This test exists because some storage implementations may still
+   * retain a node in that location that is simply flagged as deleted. It is important to make sure
+   * that that node is reclaimed.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testCanReplaceDeletedNode() throws Exception {
     String fromPath = namespace("testCanReplaceDeletedNode/from");
@@ -126,6 +146,12 @@ public class CopyOperationTest {
     
   }
   
+  /**
+   * Verify a trivial copy operation, where simply one node with one attribute is copied from the
+   * source to the destination.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testCopySimple() throws Exception {
     String fromPath = namespace("testCopySimple/from");
@@ -151,6 +177,11 @@ public class CopyOperationTest {
     Assert.assertEquals("source", c.getProperty("prop"));
   }
   
+  /**
+   * Verify that a node with a stream body copies properly when using the CopyOperation.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testCopySimpleStream() throws Exception {
     String fromPath = namespace("testCopySimpleStream/from");
@@ -189,6 +220,11 @@ public class CopyOperationTest {
     Assert.assertEquals("source", c.getProperty("prop"));
   }
 
+  /**
+   * Verify that a complex tree of content modeled after a SakaiDoc copies properly.
+   * 
+   * @throws Exception
+   */
   @Test
   public void testCopyTree() throws Exception {
     String fromPath = namespace("testCopyTree/from");
@@ -220,6 +256,10 @@ public class CopyOperationTest {
     Assert.assertNotNull(counts);
   }
   
+  /**
+   * An internal test to verify the functionality of the copyTree functionality.
+   * @throws Exception
+   */
   @Test
   public void testInternalCreateTree() throws Exception {
     String path = namespace("testInternalCreateTree/content");
