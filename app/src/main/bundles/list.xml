@@ -437,6 +437,11 @@ KERN-1187
       <version>2.0.0</version>
     </bundle>
     <bundle>
+    	<groupId>org.apache.geronimo.specs</groupId>
+    	<artifactId>geronimo-jacc_1.4_spec</artifactId>
+    	<version>1.0</version>
+    </bundle>
+    <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.activemq</artifactId>
       <version>5.3.0.1.2-SNAPSHOT</version>
@@ -526,10 +531,15 @@ KERN-1187
       <artifactId>tika-bundle</artifactId>
       <version>1.0</version>
     </bundle>
-    <bundle>
+    <!--bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.apache.sling.jcr.jackrabbit.server</artifactId>
       <version>2.1.0.1.2-SNAPSHOT</version>
+    </bundle-->
+    <bundle>
+    	<groupId>org.sakaiproject.nakamura</groupId>
+    	<artifactId>modeshape</artifactId>
+    	<version>0-SNAPSHOT</version>
     </bundle>
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
