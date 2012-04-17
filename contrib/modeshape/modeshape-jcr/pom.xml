@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+
+ Licensed to the Sakai Foundation (SF) under one
+ or more contributor license agreements. See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership. The SF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied. See the License for the
+ specific language governing permissions and limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<!-- Extend the Nakamura Base Pom which has a whole bunch of things that 
+		will make life easier here. -->
+	<parent>
+		<groupId>org.sakaiproject.nakamura</groupId>
+		<artifactId>base</artifactId>
+		<version>1.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>modeshape</artifactId>
+	<version>0-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+	<name>Modeshape JCR for Apache Sling</name>
+	<description>Modeshape JCR for Apache Sling</description>
+
+	<!-- Configure the build with 2 plugins. -->
+	<build>
+		<plugins>
+			<!-- The SCR plugin generates the OSGi files as directed by annotations 
+				in the code. This saves you having to keep an xml file in sync with the code. -->
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
+			<!-- The maven-bundle-plugin has 2 functions. It analyses the code compiled 
+				code using the BND tool to work out all the packages that are referenced 
+				in the code base. From that it builds an package import list. Finally it 
+				merges what it found with the directives given here and writes a MANIFEST.MF. 
+				Finally it constructs a Jar with the generated MANIFEST.MF. You could manually 
+				craft a MANIFEST.MF but that's hard work. Also you could use the BND tool 
+				directly, however this is easy and works. -->
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-Category> sakai-nakamura </Bundle-Category>
+						<DynamicImport-Package>*</DynamicImport-Package>
+						<Import-Package>
+							aperture;resolution:=optional,
+							org.apache.solr.*;resolution:=optional,
+							org.hibernate.annotations.*;resolution:=optional,
+							org.infinispan;resolution:=optional,
+							org.infinispan.*;resolution:=optional,
+							org.jboss.logging;resolution:=optional,
+							org.ontoware.rdf2go;resolution:=optional,
+							org.ontoware.rdf2go.*;resolution:=optional,
+							org.semanticdesktop.*;resolution:=optional,
+							org.testng;resolution:=optional,
+							org.testng.*;resolution:=optional,
+							*
+						</Import-Package>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Embed-Dependency>
+							modeshape-jcr,
+							modeshape-jcr-api,
+							modeshape-common,
+							joda-time,
+							modeshape-schematic,
+							jgroups,
+							hibernate-search-engine,
+							lucene-core,
+							lucene-regex,
+							bsh,
+							avro
+						</Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<!-- some dependencies we need -->
+	<dependencies>
+		<!-- Modeshape core jCR dependency -->
+		<dependency>
+			<groupId>org.modeshape</groupId>
+			<artifactId>modeshape-jcr</artifactId>
+			<version>3.0.0.Alpha3</version>
+		</dependency>
+		
+        <dependency>
+            <groupId>org.modeshape</groupId>
+            <artifactId>modeshape-jcr-api</artifactId>
+            <version>3.0.0.Alpha3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.modeshape</groupId>
+            <artifactId>modeshape-common</artifactId>
+            <version>3.0.0.Alpha3</version>
+        </dependency>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.modeshape</groupId>
+            <artifactId>modeshape-schematic</artifactId>
+            <version>3.0.0.Alpha3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jgroups</groupId>
+            <artifactId>jgroups</artifactId>
+            <version>3.0.6.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-search-engine</artifactId>
+            <version>4.0.0.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-regex</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+		
+		<!-- Transitive dependencies -->
+		<dependency>
+			<groupId>bsh</groupId>
+			<artifactId>bsh</artifactId>
+			<version>1.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro</artifactId>
+			<version>1.6.3</version>
+		</dependency>
+		
+		
+		<!-- Servlet API -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+		</dependency>
+
+
+		<!-- SLF4J Logging API -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+
+		<!-- SCR Annotations, used by the scr plugin to construct serviceComponents.xml 
+			and other declarative service files -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.scr.annotations</artifactId>
+		</dependency>
+
+		<!-- Core OSGi -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.core</artifactId>
+		</dependency>
+
+		<!-- The OSGi Compendium -->
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+		</dependency>
+
+
+		<!-- Logging Implementation for testing -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-simple</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Mock support for testing -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>jboss</id>
+			<url>http://repository.jboss.org/nexus/content/groups/public/</url>
+		</repository>
+	</repositories>
+</project>
