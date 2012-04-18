@@ -28,14 +28,14 @@ import org.sakaiproject.nakamura.api.search.solr.SolrSearchPropertyProvider;
 
 import java.util.Map;
 
-@Component(label = "ActivitySearchPropertyProvider")
+@Component(label = "PrivateActivityFeedSearchPropertyProvider")
 @Properties({
-    @Property(name = "sakai.search.provider", value = "Activity"),
+    @Property(name = "sakai.search.provider", value = "PrivateActivityFeed"),
     @Property(name = "sakai.search.resourceType", value = "sakai/page"),
     @Property(name = "service.vendor", value = "The Sakai Foundation"),
     @Property(name = "service.description", value = "Provides properties to the activity search templates.")})
 @Service
-public class ActivitySearchPropertyProvider implements SolrSearchPropertyProvider {
+public class PrivateActivityFeedSearchPropertyProvider implements SolrSearchPropertyProvider {
 
   /**
    * {@inheritDoc}

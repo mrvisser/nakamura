@@ -8,7 +8,7 @@
     "sortOrder": "desc",
   },
   "sling:resourceType": "sakai/solr-search",
-  "sakai:propertyprovider": "Activity",
+  "sakai:propertyprovider": "PrivateActivityFeed",
   "sakai:resultprocessor": "LiteAllActivities",
   "sakai:title": "Activity - My feed.",
   "sakai:shortDescription": "Shows the latest activities for the current user.",
