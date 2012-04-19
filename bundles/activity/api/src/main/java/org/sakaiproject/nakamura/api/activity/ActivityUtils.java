@@ -119,14 +119,13 @@ public class ActivityUtils {
   }
 
   /**
-   * Post an activity event. processed by activity listeners.
+   * Post an activity event through OSGi. Processed by ActivityPostedHandler.
    *
    * @param eventAdmin
    * @param userId     the userID performing the activity
    * @param path       the path to the node the activity is associated with
    * @param attributes attributes, required, and must contain sakai:activity-appid and sakai:activity-type.
    */
-  //public static void postActivity(EventAdmin eventAdmin, String userId, String path, String appId, String templateId, String type, String message, Map<String, Object> attributes ) {
   public static void postActivity(EventAdmin eventAdmin, String userId, String path, Map<String, Object> attributes) {
     if (attributes == null) {
       throw new IllegalArgumentException("Map of properties cannot be null");

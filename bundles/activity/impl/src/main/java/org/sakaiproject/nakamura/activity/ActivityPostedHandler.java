@@ -36,8 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import javax.servlet.ServletException;
 
 @Component(metatype=true, immediate = true, inherit=true)
@@ -47,11 +45,10 @@ import javax.servlet.ServletException;
     @Property(name = "service.description", value = "Event Handler for posting activities from other services.."),
     @Property(name = "event.topics", value = {
         "org/sakaiproject/nakamura/activity/POSTED"}) })
-public class SystemGeneratedActivityHandler implements EventHandler {
-
+public class ActivityPostedHandler implements EventHandler {
 
   public static final Logger LOG = LoggerFactory
-      .getLogger(SystemGeneratedActivityHandler.class);
+      .getLogger(ActivityPostedHandler.class);
   @Reference
   private Repository repository;
   @Reference
