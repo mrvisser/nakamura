@@ -52,7 +52,7 @@ import javax.jms.MessageListener;
 import javax.jms.Topic;
 
 @Component(immediate = true)
-public class LiteActivityListener implements MessageListener {
+public class ActivityDeliverer implements MessageListener {
 
   // References/properties need for JMS
   @Reference
@@ -65,7 +65,7 @@ public class LiteActivityListener implements MessageListener {
   protected ActivityRouterManager activityRouterManager;
 
   public static final Logger LOG = LoggerFactory
-      .getLogger(LiteActivityListener.class);
+      .getLogger(ActivityDeliverer.class);
 
   private Connection connection = null;
 
