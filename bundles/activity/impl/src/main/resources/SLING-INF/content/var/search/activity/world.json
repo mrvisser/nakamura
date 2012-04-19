@@ -1,5 +1,5 @@
 {
-  "sakai:query-template": "${_pGroupQuery} AND resourceType:sakai/activity ${_pActivityTypeQuery}",
+  "sakai:query-template": "${_pGroupQuery} AND resourceType:sakai/activity ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
   "sakai:query-template-options": {
     "sort": "${sortOn} ${sortOrder}"
   },
@@ -9,12 +9,13 @@
   },
   "sling:resourceType": "sakai/solr-search",
   "sakai:resultprocessor": "LiteAllActivities",
-  "sakai:propertyprovider": [ "WorldActivityFeed", "ActivityType" ],
+  "sakai:propertyprovider": [ "WorldActivityFeed", "ActivityType", "ActivityMessage" ],
   "sakai:title": "Activity - Worlds Feed",
   "sakai:shortDescription": "Returns recent activity nodes for the groups that make up a world.",
   "sakai:parameters" : [
     "{\"name\" : \"group\", \"description\" : \"Mandatory. The ID of the group to retrieve. Multiple group parameters are allowable.\"}",
     "{\"name\" : \"activityType\", \"description\" : \"Optionally filter by sakai:activity-type (can be multiple).\"}",
+    "{\"name\" : \"activityMessage\", \"description\" : \"Optionally filter by sakai:activityMessage (can be multiple).\"}",
     "{\"name\" : \"sortOn\", \"description\" : \"The property you want to sort on.\"}",
     "{\"name\" : \"sortOrder\", \"description\" : \"The way of ordering. 'asc' or 'desc'.\"}"
   ],

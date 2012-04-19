@@ -1,5 +1,5 @@
 {
-  "sakai:query-template":"resourceType:sakai/activity AND -path:${_myFeed} ${_pActivityTypeQuery}",
+  "sakai:query-template":"resourceType:sakai/activity AND -path:${_myFeed} ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
   "sakai:query-template-options":{
     "sort":"_created desc"
   },
@@ -8,7 +8,7 @@
     "sortOrder":"desc"
   },
   "sling:resourceType":"sakai/solr-search",
-  "sakai:propertyprovider":[ "PrivateActivityFeed", "ActivityType" ],
+  "sakai:propertyprovider":[ "PrivateActivityFeed", "ActivityType", "ActivityMessage" ],
   "sakai:resultprocessor":"LiteAllActivities",
   "sakai:title":"Activity - All System Activities",
   "sakai:shortDescription":"Shows the latest activities in the system.",
@@ -17,6 +17,7 @@
   ],
   "sakai:parameters":[
     "{\"name\" : \"activityType\", \"description\" : \"Optionally filter by sakai:activity-type (can be multiple).\"}",
+    "{\"name\" : \"activityMessage\", \"description\" : \"Optionally filter by sakai:activityMessage (can be multiple).\"}",
     "{\"name\" : \"sortOn\", \"description\" : \"The property you want to sort on.\"}",
     "{\"name\" : \"sortOrder\", \"description\" : \"The way of ordering. 'asc' or 'desc'.\"}"
   ],
