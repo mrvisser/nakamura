@@ -29,6 +29,7 @@ import static org.sakaiproject.nakamura.api.message.MessageConstants.STATE_NONE;
 import static org.sakaiproject.nakamura.api.message.MessageConstants.STATE_NOTIFIED;
 import static org.sakaiproject.nakamura.api.message.MessageConstants.STATE_PENDING;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
 import org.apache.felix.scr.annotations.Property;
@@ -148,7 +149,11 @@ public class LiteMessagingServiceImpl implements LiteMessagingService {
         // TODO: perhaps we should check that we have permission to deliver the message, especially if routing is internal:/ 
         ContentManager contentManager = session.getContentManager();
         contentManager.update(msg);
-        ActivityUtils.postActivity(eventAdmin, session.getUserId(), msg.getPath(), "content", "default", "message", "SENT_MESSAGE", null);
+        Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+            "sakai:activity-appid", "Content",
+            "sakai:activity-type", "message",
+            "sakai:activityMessage", "SENT_MESSAGE");
+        ActivityUtils.postActivity(eventAdmin, session.getUserId(), msg.getPath(), activityProps);
         raisePendingMessageEvent(session, msg);
       } catch (StorageClientException e) {
         LOGGER.warn("StorageClientException on trying to save message."

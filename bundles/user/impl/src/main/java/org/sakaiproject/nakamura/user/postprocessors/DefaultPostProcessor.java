@@ -465,19 +465,27 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
             authorizable.setProperty(propName, property.getValue());
           }
           authorizableManager.updateAuthorizable(authorizable);
-          if ( isCreate ) {
-            if ( isGroup ) {
-              ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, "Authorizable", "default", "group", "GROUP_CREATED", null);
+
+          // post the activity for this action
+          Map<String, Object> activityProps = new HashMap<String, Object>();
+          activityProps.put("sakai:activity-appid", "Authorizable");
+          if (isGroup) {
+            activityProps.put("sakai:activity-type", "group");
+            if (isCreate) {
+              activityProps.put("sakai:activityMessage", "GROUP_CREATED");
             } else {
-              ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, "Authorizable", "default", "user", "USER_CREATED", null);
+              activityProps.put("sakai:activityMessage", "GROUP_UPDATED");
             }
           } else {
-            if ( isGroup ) {
-              ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, "Authorizable", "default", "group", "GROUP_UPDATED", null);
+            activityProps.put("sakai:activity-type", "user");
+            if (isCreate) {
+              activityProps.put("sakai:activityMessage", "USER_CREATED");
             } else {
-              ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, "Authorizable", "default", "user", "USER_UPDATED", null);
+              activityProps.put("sakai:activityMessage", "USER_UPDATED");
             }
           }
+          ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, activityProps);
+
         }
       } else {
         // Attempt to sync the Acl on the home folder with whatever is present in the

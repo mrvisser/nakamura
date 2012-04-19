@@ -339,7 +339,11 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
 
     contentManager.update(content);
 
-    ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, "Content", "default", "pooled content", "UPDATED_CONTENT", null);
+    Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+        "sakai:activity-appid", "Content",
+        "sakai:activity-type", "pooled content",
+        "sakai:activityMessage", "UPDATED_CONTENT");
+    ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
 
     // deny anon everything
     // deny everyone everything
@@ -386,7 +390,11 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
       AclModification.addAcl(true, Permissions.CAN_MANAGE, au.getId(), modifications);
       accessControlManager.setAcl(Security.ZONE_CONTENT, poolId, modifications.toArray(new AclModification[modifications.size()]));
 
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, "Content", "default", "pooled content", "CREATED_FILE", null);
+      Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+          "sakai:activity-appid", "Content",
+          "sakai:activity-type", "pooled content",
+          "sakai:activityMessage", "CREATED_FILE");
+      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
     } else if (alternativeStream != null && alternativeStream.indexOf("-") > 0) {
       String[] alternativeStreamParts = StringUtils.split(alternativeStream, ALTERNATIVE_STREAM_SELECTOR_SEPARATOR);
       String pageId = alternativeStreamParts[0];
@@ -396,15 +404,22 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
           POOLED_CONTENT_RT));
       contentManager.update(alternativeContent);
       contentManager.writeBody(alternativeContent.getPath(), value.getInputStream(), previewSize);
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, "Content", "default",
-          "pooled content", "CREATED_ALT_FILE",
-          ImmutableMap.<String, Object> of("altPath", poolId + "/" + pageId));
+      Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+          "sakai:activity-appid", "Content",
+          "sakai:activity-type", "pooled content",
+          "sakai:activityMessage", "CREATED_ALT_FILE",
+          "altPath", poolId + "/" + pageId);
+      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
     } else {
       Content content = contentManager.get(poolId);
       content.setProperty(StorageClientUtils.getAltField(Content.MIMETYPE_FIELD, alternativeStream), contentType);
       contentManager.update(content);
       contentManager.writeBody(poolId, value.getInputStream(),alternativeStream);
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, "Content", "default", "pooled content", "UPDATED_FILE", null);
+      Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+          "sakai:activity-appid", "Content",
+          "sakai:activity-type", "pooled content",
+          "sakai:activityMessage", "UPDATED_FILE");
+      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
     }
     return contentManager.get(poolId);
   }

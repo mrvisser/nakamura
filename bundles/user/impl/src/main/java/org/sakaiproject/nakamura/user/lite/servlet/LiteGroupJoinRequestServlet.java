@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Map;
 
 /**
  *
@@ -164,7 +165,11 @@ public class LiteGroupJoinRequestServlet extends SlingAllMethodsServlet {
           authorizableManager.updateAuthorizable(targetGroup);
           Dictionary<String, Object> eventProps = new Hashtable<String, Object>();
           eventAdmin.postEvent(new Event(GroupEvent.joinedSite.getTopic(), eventProps));
-          ActivityUtils.postActivity(eventAdmin, userId, group.getPath(), "Content", "default", "pooled content", "JOINED_GROUP", null);
+          Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+              "sakai:activity-appid", "Authorizable",
+              "sakai:activity-type", "group",
+              "sakai:activityMessage", "JOINED_GROUP");
+          ActivityUtils.postActivity(eventAdmin, userId, group.getPath(), activityProps);
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERS_PROP, targetGroup.getId());
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERSHIPS_PROP, userId);
           break;

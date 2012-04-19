@@ -17,8 +17,14 @@
  */
 package org.sakaiproject.nakamura.activity;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityUtils;
 import org.sakaiproject.nakamura.testutils.easymock.AbstractEasyMockTest;
@@ -27,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.jcr.RepositoryException;
 
@@ -34,6 +41,13 @@ import javax.jcr.RepositoryException;
  *
  */
 public class ActivityUtilsTest extends AbstractEasyMockTest{
+
+  EventAdmin eventAdmin;
+
+  @Before
+  public void setup() {
+    eventAdmin = Mockito.mock(EventAdmin.class);
+  }
 
   @Test
   public void testUserFeed() throws RepositoryException {
@@ -75,6 +89,28 @@ public class ActivityUtilsTest extends AbstractEasyMockTest{
     Assert.assertEquals(
         "/2010/01/22/09/2010-01-22-09-ef12a1e112d21f31431b3c4535d1d3a13",
         result);
+  }
+
+  @Test
+  public void postActivity() {
+    Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+        "sakai:activity-appid", "Content",
+        "sakai:activity-type", "pooled content",
+        "sakai:activityMessage", "UPDATED_FILE");
+    ActivityUtils.postActivity(eventAdmin, "joe", "/some/path", activityProps);
+    Mockito.verify(eventAdmin).postEvent(Matchers.any(Event.class));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void postActivityWithNullProps() {
+    ActivityUtils.postActivity(eventAdmin, "joe", "/some/path", null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void postActivityWithMissingMandatoryProp() {
+    Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+        "sakai:activity-appid", "Content");
+    ActivityUtils.postActivity(eventAdmin, "joe", "/some/path", activityProps);
   }
 
 }
