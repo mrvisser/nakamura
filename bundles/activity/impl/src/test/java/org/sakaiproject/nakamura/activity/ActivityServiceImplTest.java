@@ -35,20 +35,20 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ActivityServiceImplTest extends Assert {
 
   ActivityServiceImpl activityService;
 
   private Repository repository;
 
-  private ActivityServiceCallback activityServiceCallback;
-
   @Before
   public void setup() throws Exception {
     this.activityService = new ActivityServiceImpl();
     this.activityService.eventAdmin = Mockito.mock(EventAdmin.class);
     repository = new BaseMemoryRepository().getRepository();
-    activityServiceCallback = Mockito.mock(ActivityServiceCallback.class);
 
     final Session adminSession = repository.loginAdministrative();
     adminSession.getAuthorizableManager().createUser("joe", "joe", "joe",
@@ -65,11 +65,11 @@ public class ActivityServiceImplTest extends Assert {
 
     Content content = new Content("/some/arbitrary/path", ImmutableMap.of("foo", (Object) "bar"));
     String userID = "alice";
-
-    this.activityService.createActivity(adminSession, content, userID, activityServiceCallback);
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put("someProp", "someVal");
+    this.activityService.createActivity(adminSession, content, userID, props);
 
     Mockito.verify(this.activityService.eventAdmin).postEvent(Mockito.any(Event.class));
-    Mockito.verify(activityServiceCallback).processRequest(Mockito.any(Content.class));
 
     // make sure activity store got created
     String storePath = "/some/arbitrary/path/" + ActivityConstants.ACTIVITY_STORE_NAME;
@@ -124,6 +124,7 @@ public class ActivityServiceImplTest extends Assert {
         activityFound = true;
         Assert.assertEquals("alice", item.getProperty(ActivityConstants.PARAM_ACTOR_ID));
         Assert.assertEquals("/some/arbitrary/path", item.getProperty(ActivityConstants.PARAM_SOURCE));
+        Assert.assertEquals("someVal", item.getProperty("someProp"));
       }
     }
     Assert.assertTrue(activityFound);
@@ -138,7 +139,7 @@ public class ActivityServiceImplTest extends Assert {
     final Session session = repository.login("joe", "joe");
     Content content = new Content("/some/arbitrary/path", ImmutableMap.of("foo", (Object) "bar"));
     String userID = "alice";
-    this.activityService.createActivity(session, content, userID, activityServiceCallback);
+    this.activityService.createActivity(session, content, userID, null);
   }
 
 }

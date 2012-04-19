@@ -75,17 +75,7 @@ public class SystemGeneratedActivityHandler implements EventHandler {
       final ContentManager contentManager = adminSession.getContentManager();
       Content location = contentManager.get(path);
       if ( location != null ) {
-        activityService.createActivity(adminSession, location, userId, new ActivityServiceCallback() {
-
-          public void processRequest(Content activityNode) throws StorageClientException,
-              ServletException, IOException, AccessDeniedException {
-
-            for ( Entry<String, Object> e : activityProperties.entrySet()) {
-              activityNode.setProperty(e.getKey(), e.getValue());
-            }
-            contentManager.update(activityNode);
-          }
-        });
+        activityService.createActivity(adminSession, location, userId, activityProperties);
       }
 
     } catch (ClientPoolException e) {

@@ -23,11 +23,13 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 
 public interface ActivityService {
 
-  void createActivity(Session session, Content location, String userId, ActivityServiceCallback activityServiceCallback) throws AccessDeniedException, StorageClientException, ServletException, IOException;
+  void createActivity(Session session, Content location, String userId, Map<String, Object> activityProperties)
+      throws AccessDeniedException, StorageClientException, ServletException, IOException;
 
 }

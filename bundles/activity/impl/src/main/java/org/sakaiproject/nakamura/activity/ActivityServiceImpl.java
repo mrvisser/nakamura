@@ -51,6 +51,7 @@ import org.sakaiproject.nakamura.util.osgi.EventUtils;
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 
@@ -61,7 +62,8 @@ public class ActivityServiceImpl implements ActivityService {
   @Reference
   EventAdmin eventAdmin;
 
-  public void createActivity(Session session, Content targetLocation,  String userId, ActivityServiceCallback callback) throws AccessDeniedException, StorageClientException, ServletException, IOException {
+  public void createActivity(Session session, Content targetLocation,  String userId, Map<String, Object> activityProperties)
+      throws AccessDeniedException, StorageClientException, ServletException, IOException {
     if ( userId == null ) {
       userId = session.getUserId();
     }
@@ -101,15 +103,16 @@ public class ActivityServiceImpl implements ActivityService {
           (Object) ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE)));
     }
 
-    
-    Content activtyNode = contentManager.get(activityPath);
-    callback.processRequest(activtyNode);
+    Content activityNode = contentManager.get(activityPath);
+    activityNode.setProperty(PARAM_ACTOR_ID, userId);
+    activityNode.setProperty(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
+    for ( String key : activityProperties.keySet() ) {
+      activityNode.setProperty(key, activityProperties.get(key));
+    }
 
+    //save the content
+    contentManager.update(activityNode);
 
-    activtyNode = contentManager.get(activityPath);
-    activtyNode.setProperty(PARAM_ACTOR_ID, userId);
-    activtyNode.setProperty(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
-    contentManager.update(activtyNode);
     // post the asynchronous OSGi event
     final Dictionary<String, String> properties = new Hashtable<String, String>();
     properties.put(UserConstants.EVENT_PROP_USERID, userId);
