@@ -38,7 +38,7 @@ import org.apache.sling.servlets.post.Modification;
 import org.apache.sling.servlets.post.ModificationType;
 import org.apache.sling.servlets.post.SlingPostConstants;
 import org.osgi.service.event.EventAdmin;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -231,6 +231,8 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
   @Reference
   protected EventAdmin eventAdmin;
 
+  @Reference
+  protected transient ActivityService activityService;
 
   @Activate
   @Modified
@@ -484,7 +486,7 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
               activityProps.put("sakai:activityMessage", "USER_UPDATED");
             }
           }
-          ActivityUtils.postActivity(eventAdmin, session.getUserId(), homePath, activityProps);
+          activityService.postActivity(session.getUserId(), homePath, activityProps);
 
         }
       } else {

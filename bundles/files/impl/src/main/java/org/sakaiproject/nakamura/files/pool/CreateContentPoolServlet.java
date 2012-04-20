@@ -42,7 +42,7 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
 import org.osgi.service.event.EventAdmin;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.cluster.ClusterTrackingService;
 import org.sakaiproject.nakamura.api.doc.BindingType;
 import org.sakaiproject.nakamura.api.doc.ServiceBinding;
@@ -140,6 +140,9 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
 
   @Reference
   protected transient AuthorizableCountChanger authorizableCountChanger;
+
+  @Reference
+  protected ActivityService activityService;
 
   private static final long serialVersionUID = -5099697955361286370L;
 
@@ -343,7 +346,7 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
         "sakai:activity-appid", "Content",
         "sakai:activity-type", "pooled content",
         "sakai:activityMessage", "UPDATED_CONTENT");
-    ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
+    activityService.postActivity(au.getId(), poolId, activityProps);
 
     // deny anon everything
     // deny everyone everything
@@ -394,7 +397,7 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
           "sakai:activity-appid", "Content",
           "sakai:activity-type", "pooled content",
           "sakai:activityMessage", "CREATED_FILE");
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
+      activityService.postActivity(au.getId(), poolId, activityProps);
     } else if (alternativeStream != null && alternativeStream.indexOf("-") > 0) {
       String[] alternativeStreamParts = StringUtils.split(alternativeStream, ALTERNATIVE_STREAM_SELECTOR_SEPARATOR);
       String pageId = alternativeStreamParts[0];
@@ -409,7 +412,7 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
           "sakai:activity-type", "pooled content",
           "sakai:activityMessage", "CREATED_ALT_FILE",
           "altPath", poolId + "/" + pageId);
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
+      activityService.postActivity(au.getId(), poolId, activityProps);
     } else {
       Content content = contentManager.get(poolId);
       content.setProperty(StorageClientUtils.getAltField(Content.MIMETYPE_FIELD, alternativeStream), contentType);
@@ -419,7 +422,7 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
           "sakai:activity-appid", "Content",
           "sakai:activity-type", "pooled content",
           "sakai:activityMessage", "UPDATED_FILE");
-      ActivityUtils.postActivity(eventAdmin, au.getId(), poolId, activityProps);
+      activityService.postActivity(au.getId(), poolId, activityProps);
     }
     return contentManager.get(poolId);
   }

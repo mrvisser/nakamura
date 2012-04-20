@@ -38,11 +38,6 @@ import java.util.Map;
  */
 public class ActivityUtils {
 
-  private static SecureRandom random = null;
-
-  public static final Logger LOG = LoggerFactory
-      .getLogger(ActivityUtils.class);
-
   /**
    * Returns the path to the activity feed for a user.
    *
@@ -80,66 +75,4 @@ public class ActivityUtils {
 
   }
 
-  /**
-   * @return Creates a unique path to an activity in the form of 2010-01-21-09-randombit
-   */
-  public static String createId() {
-    Calendar c = Calendar.getInstance();
-
-    String[] vals = new String[4];
-    vals[0] = "" + c.get(Calendar.YEAR);
-    vals[1] = StringUtils.leftPad("" + (c.get(Calendar.MONTH) + 1), 2, "0");
-    vals[2] = StringUtils.leftPad("" + c.get(Calendar.DAY_OF_MONTH), 2, "0");
-    vals[3] = StringUtils.leftPad("" + c.get(Calendar.HOUR_OF_DAY), 2, "0");
-
-    StringBuilder id = new StringBuilder();
-
-    for (String v : vals) {
-      id.append(v).append("-");
-    }
-
-    byte[] bytes = new byte[20];
-    String randomHash = "";
-    try {
-      if (random == null) {
-        random = SecureRandom.getInstance("SHA1PRNG");
-      }
-      random.nextBytes(bytes);
-      randomHash = Arrays.toString(bytes);
-      randomHash = org.sakaiproject.nakamura.util.StringUtils
-          .sha1Hash(randomHash);
-    } catch (NoSuchAlgorithmException e) {
-      LOG.error("No SHA algorithm on system?", e);
-    } catch (UnsupportedEncodingException e) {
-      LOG.error("Byte encoding not supported?", e);
-    }
-
-    id.append(randomHash);
-    return id.toString();
-  }
-
-  /**
-   * Post an activity event through OSGi. Processed by ActivityPostedHandler.
-   *
-   * @param eventAdmin
-   * @param userId     the userID performing the activity
-   * @param path       the path to the node the activity is associated with
-   * @param attributes attributes, required, and must contain sakai:activity-appid and sakai:activity-type.
-   */
-  public static void postActivity(EventAdmin eventAdmin, String userId, String path, Map<String, Object> attributes) {
-    if (attributes == null) {
-      throw new IllegalArgumentException("Map of properties cannot be null");
-    }
-    if (attributes.get("sakai:activity-appid") == null) {
-      throw new IllegalArgumentException("The sakai:activity-appid parameter must not be null");
-    }
-    if (attributes.get("sakai:activity-type") == null) {
-      throw new IllegalArgumentException("The sakai:activity-type parameter must not be null");
-    }
-    Map<String, Object> eventProps = Maps.newHashMap();
-    eventProps.put("path", path);
-    eventProps.put("userid", userId);
-    eventProps.put("attributes", attributes);
-    eventAdmin.postEvent(new Event("org/sakaiproject/nakamura/activity/POSTED", eventProps));
-  }
 }

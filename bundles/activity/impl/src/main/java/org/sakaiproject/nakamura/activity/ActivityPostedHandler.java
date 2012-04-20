@@ -51,8 +51,9 @@ public class ActivityPostedHandler implements EventHandler {
       .getLogger(ActivityPostedHandler.class);
   @Reference
   private Repository repository;
+
   @Reference
-  private ActivityService activityService;
+  private ActivityServiceImpl activityService;
 
   public void handleEvent(Event event) {
 

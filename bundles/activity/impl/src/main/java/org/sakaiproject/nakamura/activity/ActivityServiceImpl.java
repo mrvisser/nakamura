@@ -25,14 +25,16 @@ import static org.sakaiproject.nakamura.api.activity.ActivityConstants.LITE_EVEN
 import static org.sakaiproject.nakamura.api.activity.ActivityConstants.PARAM_ACTOR_ID;
 
 import com.google.common.collect.ImmutableMap;
-
+import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
+import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -47,22 +49,51 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.user.UserConstants;
 import org.sakaiproject.nakamura.util.osgi.EventUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
-
 import javax.servlet.ServletException;
 
 @Component(immediate=true, metatype=true)
 @Service(value=ActivityService.class)
 public class ActivityServiceImpl implements ActivityService {
 
+  public static final Logger LOGGER = LoggerFactory
+      .getLogger(ActivityServiceImpl.class);
+
   @Reference
   EventAdmin eventAdmin;
 
-  public void createActivity(Session session, Content targetLocation,  String userId, Map<String, Object> activityProperties)
+  private static SecureRandom random = null;
+
+  public void postActivity(String userId, String path, Map<String, Object> attributes) {
+    if (attributes == null) {
+      throw new IllegalArgumentException("Map of properties cannot be null");
+    }
+    if (attributes.get("sakai:activity-appid") == null) {
+      throw new IllegalArgumentException("The sakai:activity-appid parameter must not be null");
+    }
+    if (attributes.get("sakai:activity-type") == null) {
+      throw new IllegalArgumentException("The sakai:activity-type parameter must not be null");
+    }
+    Map<String, Object> eventProps = Maps.newHashMap();
+    eventProps.put("path", path);
+    eventProps.put("userid", userId);
+    eventProps.put("attributes", attributes);
+    // ActivityPostedHandler will pick up this event and call back to create the activity
+    eventAdmin.postEvent(new Event("org/sakaiproject/nakamura/activity/POSTED", eventProps));
+  }
+
+  protected void createActivity(Session session, Content targetLocation,  String userId, Map<String, Object> activityProperties)
       throws AccessDeniedException, StorageClientException, ServletException, IOException {
     if ( userId == null ) {
       userId = session.getUserId();
@@ -91,7 +122,7 @@ public class ActivityServiceImpl implements ActivityService {
                   Permissions.ALL.getPermission(), Operation.OP_REPLACE) });
     }
     // create activity within activityStore
-    String activityPath = StorageClientUtils.newPath(path, ActivityUtils.createId());
+    String activityPath = StorageClientUtils.newPath(path, createId());
     String activityFeedPath = StorageClientUtils.newPath(targetLocation.getPath(), ACTIVITY_FEED_NAME);
 
     if (!contentManager.exists(activityFeedPath)) {
@@ -120,6 +151,44 @@ public class ActivityServiceImpl implements ActivityService {
     properties.put("path", activityPath);
     properties.put("resourceType", ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE);
     EventUtils.sendOsgiEvent(properties, LITE_EVENT_TOPIC, eventAdmin);
+  }
+
+  /**
+   * @return Creates a unique path to an activity in the form of 2010-01-21-09-randombit
+   */
+  static String createId() {
+    Calendar c = Calendar.getInstance();
+
+    String[] vals = new String[4];
+    vals[0] = "" + c.get(Calendar.YEAR);
+    vals[1] = StringUtils.leftPad("" + (c.get(Calendar.MONTH) + 1), 2, "0");
+    vals[2] = StringUtils.leftPad("" + c.get(Calendar.DAY_OF_MONTH), 2, "0");
+    vals[3] = StringUtils.leftPad("" + c.get(Calendar.HOUR_OF_DAY), 2, "0");
+
+    StringBuilder id = new StringBuilder();
+
+    for (String v : vals) {
+      id.append(v).append("-");
+    }
+
+    byte[] bytes = new byte[20];
+    String randomHash = "";
+    try {
+      if (random == null) {
+        random = SecureRandom.getInstance("SHA1PRNG");
+      }
+      random.nextBytes(bytes);
+      randomHash = Arrays.toString(bytes);
+      randomHash = org.sakaiproject.nakamura.util.StringUtils
+          .sha1Hash(randomHash);
+    } catch (NoSuchAlgorithmException e) {
+      LOGGER.error("No SHA algorithm on system?", e);
+    } catch (UnsupportedEncodingException e) {
+      LOGGER.error("Byte encoding not supported?", e);
+    }
+
+    id.append(randomHash);
+    return id.toString();
   }
 
 }

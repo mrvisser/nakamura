@@ -29,7 +29,7 @@ import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.doc.BindingType;
 import org.sakaiproject.nakamura.api.doc.ServiceBinding;
 import org.sakaiproject.nakamura.api.doc.ServiceDocumentation;
@@ -56,7 +56,6 @@ import org.sakaiproject.nakamura.util.PathUtils;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -99,6 +98,10 @@ public class LiteGroupJoinRequestServlet extends SlingAllMethodsServlet {
   @Reference
   @SuppressWarnings(value = "NP_UNWRITTEN_FIELD", justification = "Injected by OSGi")
   protected transient Repository repository;
+
+  @Reference
+  @SuppressWarnings(value = "NP_UNWRITTEN_FIELD", justification = "Injected by OSGi")
+  protected transient ActivityService activityService;
 
   /**
    * The OSGi Event Admin Service.
@@ -169,7 +172,7 @@ public class LiteGroupJoinRequestServlet extends SlingAllMethodsServlet {
               "sakai:activity-appid", "Authorizable",
               "sakai:activity-type", "group",
               "sakai:activityMessage", "JOINED_GROUP");
-          ActivityUtils.postActivity(eventAdmin, userId, group.getPath(), activityProps);
+          activityService.postActivity(userId, group.getPath(), activityProps);
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERS_PROP, targetGroup.getId());
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERSHIPS_PROP, userId);
           break;

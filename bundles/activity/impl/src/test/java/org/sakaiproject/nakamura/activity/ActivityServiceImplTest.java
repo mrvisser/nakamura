@@ -23,10 +23,12 @@ import junit.framework.Assert;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
+import org.sakaiproject.nakamura.api.activity.ActivityUtils;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -35,7 +37,11 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ActivityServiceImplTest extends Assert {
@@ -140,6 +146,42 @@ public class ActivityServiceImplTest extends Assert {
     Content content = new Content("/some/arbitrary/path", ImmutableMap.of("foo", (Object) "bar"));
     String userID = "alice";
     this.activityService.createActivity(session, content, userID, null);
+  }
+
+
+  @Test
+  public void postActivity() {
+    Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+        "sakai:activity-appid", "Content",
+        "sakai:activity-type", "pooled content",
+        "sakai:activityMessage", "UPDATED_FILE");
+    this.activityService.postActivity("joe", "/some/path", activityProps);
+    Mockito.verify(this.activityService.eventAdmin).postEvent(Matchers.any(Event.class));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void postActivityWithNullProps() {
+    this.activityService.postActivity("joe", "/some/path", null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void postActivityWithMissingMandatoryProp() {
+    Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
+        "sakai:activity-appid", "Content");
+    this.activityService.postActivity("joe", "/some/path", activityProps);
+  }
+
+  @Test
+  public void testCreateID() throws UnsupportedEncodingException,
+      NoSuchAlgorithmException {
+    List<String> ids = new ArrayList<String>();
+    for (int i = 0; i < 1000; i++) {
+      String s = this.activityService.createId();
+      if (ids.contains(s)) {
+        org.junit.Assert.fail("This id is already in the list.");
+      }
+      ids.add(s);
+    }
   }
 
 }

@@ -37,7 +37,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -81,6 +81,9 @@ public class LiteMessagingServiceImpl implements LiteMessagingService {
 
   @Reference
   protected transient EventAdmin eventAdmin;
+
+  @Reference
+  protected transient ActivityService activityService;
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(LiteMessagingServiceImpl.class);
@@ -153,7 +156,7 @@ public class LiteMessagingServiceImpl implements LiteMessagingService {
             "sakai:activity-appid", "Content",
             "sakai:activity-type", "message",
             "sakai:activityMessage", "SENT_MESSAGE");
-        ActivityUtils.postActivity(eventAdmin, session.getUserId(), msg.getPath(), activityProps);
+        activityService.postActivity(session.getUserId(), msg.getPath(), activityProps);
         raisePendingMessageEvent(session, msg);
       } catch (StorageClientException e) {
         LOGGER.warn("StorageClientException on trying to save message."
