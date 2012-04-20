@@ -28,13 +28,18 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Properties;
+import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventHandler;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
+import org.sakaiproject.nakamura.api.lite.ClientPoolException;
+import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
@@ -63,15 +68,23 @@ import java.util.Hashtable;
 import java.util.Map;
 import javax.servlet.ServletException;
 
-@Component(immediate=true, metatype=true)
-@Service(value=ActivityService.class)
-public class ActivityServiceImpl implements ActivityService {
+@Component(immediate = true, metatype = true)
+@Service
+@Properties(value = {
+    @Property(name = "service.vendor", value = "The Sakai Foundation"),
+    @Property(name = "service.description", value = "Event Handler for posting activities from other services.."),
+    @Property(name = "event.topics", value = {
+        "org/sakaiproject/nakamura/activity/POSTED"})})
+public class ActivityServiceImpl implements ActivityService, EventHandler {
 
   public static final Logger LOGGER = LoggerFactory
       .getLogger(ActivityServiceImpl.class);
 
   @Reference
   EventAdmin eventAdmin;
+
+  @Reference
+  Repository repository;
 
   private static SecureRandom random = null;
 
@@ -89,29 +102,71 @@ public class ActivityServiceImpl implements ActivityService {
     eventProps.put("path", path);
     eventProps.put("userid", userId);
     eventProps.put("attributes", attributes);
-    // ActivityPostedHandler will pick up this event and call back to create the activity
+    // handleEvent will pick up this event and call back to create the activity
     eventAdmin.postEvent(new Event("org/sakaiproject/nakamura/activity/POSTED", eventProps));
   }
 
-  protected void createActivity(Session session, Content targetLocation,  String userId, Map<String, Object> activityProperties)
+  public void handleEvent(Event event) {
+
+    Session adminSession = null;
+    try {
+      adminSession = repository.loginAdministrative();
+      String path = (String) event.getProperty("path");
+      String userId = (String) event.getProperty("userid");
+      @SuppressWarnings("unchecked")
+      final Map<String, Object> activityProperties = (Map<String, Object>) event.getProperty("attributes");
+
+      // don't add activity when we're just creating a preview
+      if ("CREATED_ALT_FILE".equals(activityProperties.get("sakai:activityMessage"))) {
+        return;
+      }
+
+      final ContentManager contentManager = adminSession.getContentManager();
+      Content location = contentManager.get(path);
+      if (location != null) {
+        this.createActivity(adminSession, location, userId, activityProperties);
+      }
+
+    } catch (ClientPoolException e) {
+      LOGGER.warn(e.getMessage(), e);
+    } catch (StorageClientException e) {
+      LOGGER.warn(e.getMessage(), e);
+    } catch (AccessDeniedException e) {
+      LOGGER.warn(e.getMessage(), e);
+    } catch (ServletException e) {
+      LOGGER.warn(e.getMessage(), e);
+    } catch (IOException e) {
+      LOGGER.warn(e.getMessage(), e);
+    } finally {
+      if (adminSession != null) {
+        try {
+          adminSession.logout();
+        } catch (ClientPoolException e) {
+          LOGGER.warn(e.getMessage(), e);
+        }
+      }
+    }
+  }
+
+  protected void createActivity(Session session, Content targetLocation, String userId, Map<String, Object> activityProperties)
       throws AccessDeniedException, StorageClientException, ServletException, IOException {
-    if ( userId == null ) {
+    if (userId == null) {
       userId = session.getUserId();
     }
-    if ( !userId.equals(session.getUserId()) && !User.ADMIN_USER.equals(session.getUserId()) ) {
+    if (!userId.equals(session.getUserId()) && !User.ADMIN_USER.equals(session.getUserId())) {
       throw new IllegalStateException("Only Administrative sessions may act on behalf of another user for activities");
     }
     ContentManager contentManager = session.getContentManager();
     // create activityStore if it does not exist
     String path = StorageClientUtils.newPath(targetLocation.getPath(), ACTIVITY_STORE_NAME);
     if (!contentManager.exists(path)) {
-      contentManager.update(new Content(path, ImmutableMap.<String, Object> of(
+      contentManager.update(new Content(path, ImmutableMap.<String, Object>of(
           SLING_RESOURCE_TYPE_PROPERTY, ACTIVITY_STORE_RESOURCE_TYPE)));
       // set ACLs so that everyone can add activities; anonymous = none.
       session.getAccessControlManager().setAcl(
           Security.ZONE_CONTENT,
           path,
-          new AclModification[] {
+          new AclModification[]{
               new AclModification(AclModification.denyKey(User.ANON_USER),
                   Permissions.ALL.getPermission(), Operation.OP_REPLACE),
               new AclModification(AclModification.grantKey(Group.EVERYONE),
@@ -119,7 +174,7 @@ public class ActivityServiceImpl implements ActivityService {
               new AclModification(AclModification.grantKey(Group.EVERYONE),
                   Permissions.CAN_WRITE.getPermission(), Operation.OP_REPLACE),
               new AclModification(AclModification.grantKey(userId),
-                  Permissions.ALL.getPermission(), Operation.OP_REPLACE) });
+                  Permissions.ALL.getPermission(), Operation.OP_REPLACE)});
     }
     // create activity within activityStore
     String activityPath = StorageClientUtils.newPath(path, createId());
@@ -137,7 +192,7 @@ public class ActivityServiceImpl implements ActivityService {
     Content activityNode = contentManager.get(activityPath);
     activityNode.setProperty(PARAM_ACTOR_ID, userId);
     activityNode.setProperty(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
-    for ( String key : activityProperties.keySet() ) {
+    for (String key : activityProperties.keySet()) {
       activityNode.setProperty(key, activityProperties.get(key));
     }
 

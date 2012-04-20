@@ -55,6 +55,7 @@ public class ActivityServiceImplTest extends Assert {
     this.activityService = new ActivityServiceImpl();
     this.activityService.eventAdmin = Mockito.mock(EventAdmin.class);
     repository = new BaseMemoryRepository().getRepository();
+    this.activityService.repository = repository;
 
     final Session adminSession = repository.loginAdministrative();
     adminSession.getAuthorizableManager().createUser("joe", "joe", "joe",
