@@ -15,26 +15,16 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.activity;
+package org.sakaiproject.nakamura.activity.routing;
 
 /**
- * An abstract implementation of an {@link ActivityRoute}
+ *
  */
-public abstract class AbstractActivityRoute implements ActivityRoute {
-
-  private String destination;
-
-  public AbstractActivityRoute(String destination) {
-    this.destination = destination;
-  }
+public interface ActivityRoute {
 
   /**
-   * {@inheritDoc}
-   * 
-   * @see org.sakaiproject.nakamura.api.activity.ActivityRoute#getDestination()
+   * @return The destination for an activity.
    */
-  public String getDestination() {
-    return destination;
-  }
+  public String getDestination();
 
 }
