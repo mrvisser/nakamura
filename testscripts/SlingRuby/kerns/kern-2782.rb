@@ -8,14 +8,30 @@ require 'nakamura/file'
 include SlingUsers
 include SlingFile
 
-class TC_Kern1376Test < Test::Unit::TestCase
+class TC_Kern2782Test < Test::Unit::TestCase
   include SlingTest
 
-  def test_get_pooled_content_activities
+  def setup
+    super
+    @POOLED_CONTENT_ACTIVITY_FEED = "/var/search/activity/pooledcontent.tidy.json"
+  end
+
+  def get_activities(poolid)
+    res = @s.execute_get(@s.url_for(@POOLED_CONTENT_ACTIVITY_FEED), {
+      "p" => "/p/#{poolid}"
+    })
+    @log.info("Activity feed is #{res.body}")
+    assert_equal("200", res.code, "Should have found activity feed")
+    return JSON.parse(res.body)
+  end
+
+  def test_pooled_content_activities
     @fm = FileManager.new(@s)
     m = uniqueness()
     manager = create_user("user-manager-#{m}")
+
     @s.switch_user(User.admin_user())
+
     res = @fm.upload_pooled_file("random-#{m}.txt", "Plain content", "text/plain")
     assert_equal("201", res.code, "Expected to be able to create pooled content")
     uploadresult = JSON.parse(res.body)
@@ -33,19 +49,29 @@ class TC_Kern1376Test < Test::Unit::TestCase
     m = JSON.parse(res.body)
     assert_equal(m["testing"], "testvalue", "Looks like the property was not written Got #{res.body}")
 
-    wait_for_indexer()
+    # waiting for osgi events to fire and for solr index to rebuild
     sleep(5)
+    wait_for_indexer()
 
-    res = @s.execute_get(@s.url_for("/var/search/activity/pooledcontent.tidy.json"), {
-      "p" => "/p/#{contentid}"
-    })
-    assert_equal("200", res.code, "Should have found activity feed")
-    @log.info("Activity feed is #{res.body}")
-    activityfeed = JSON.parse(res.body)
+    activityfeed = get_activities(contentid)
     # the system should have create created one activity
     # sakai:activityMessage=CREATED_FILE
     assert_equal(1, activityfeed["total"])
     assert_equal("CREATED_FILE", activityfeed["results"][0]["sakai:activityMessage"])
+
+    # now update the previous file, should produce another activity of type
+    # sakai:activityMessage=UPDATED_FILE
+    res = @fm.upload_pooled_file("random-#{m}.txt", "Plain content", "text/plain", contentid)
+    assert_equal("200", res.code, "Expected to be able to update pooled content")
+
+    # waiting for osgi events to fire and for solr index to rebuild - is there a smarter way???
+    sleep(5)
+    wait_for_indexer()
+
+    activityfeed = get_activities(contentid)
+    assert_equal(2, activityfeed["total"])
+    assert_equal("UPDATED_FILE", activityfeed["results"][0]["sakai:activityMessage"])
+    assert_equal("CREATED_FILE", activityfeed["results"][1]["sakai:activityMessage"])
 
   end
 
