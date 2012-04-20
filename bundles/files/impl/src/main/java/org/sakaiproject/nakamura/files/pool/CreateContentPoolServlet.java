@@ -407,12 +407,6 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
           POOLED_CONTENT_RT));
       contentManager.update(alternativeContent);
       contentManager.writeBody(alternativeContent.getPath(), value.getInputStream(), previewSize);
-      Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-          "sakai:activity-appid", "Content",
-          "sakai:activity-type", "pooled content",
-          "sakai:activityMessage", "CREATED_ALT_FILE",
-          "altPath", poolId + "/" + pageId);
-      activityService.postActivity(au.getId(), poolId, activityProps);
     } else {
       Content content = contentManager.get(poolId);
       content.setProperty(StorageClientUtils.getAltField(Content.MIMETYPE_FIELD, alternativeStream), contentType);
