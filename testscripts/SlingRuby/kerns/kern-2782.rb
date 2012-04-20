@@ -73,6 +73,20 @@ class TC_Kern2782Test < Test::Unit::TestCase
     assert_equal("UPDATED_FILE", activityfeed["results"][0]["sakai:activityMessage"])
     assert_equal("CREATED_FILE", activityfeed["results"][1]["sakai:activityMessage"])
 
+    # now make a comment
+    res = @s.execute_post("#{contentpath}.comments", { "comment" => "test1" })
+    assert_equal("201", res.code, "Comment should have been created")
+    commentcreateresult = JSON.parse(res.body)
+    commentid = commentcreateresult["commentId"]
+
+    # waiting for osgi events to fire and for solr index to rebuild - is there a smarter way???
+    sleep(5)
+    wait_for_indexer()
+
+    commentfeed = get_activities(commentid)
+    assert_equal(1, commentfeed["total"])
+    assert_equal("CREATED_COMMENT", commentfeed["results"][0]["sakai:activityMessage"])
+
   end
 
 end
