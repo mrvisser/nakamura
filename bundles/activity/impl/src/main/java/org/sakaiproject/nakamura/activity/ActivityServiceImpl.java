@@ -92,10 +92,10 @@ public class ActivityServiceImpl implements ActivityService, EventHandler {
     if (attributes == null) {
       throw new IllegalArgumentException("Map of properties cannot be null");
     }
-    if (attributes.get("sakai:activity-appid") == null) {
+    if (attributes.get(ActivityConstants.PARAM_APPLICATION_ID) == null) {
       throw new IllegalArgumentException("The sakai:activity-appid parameter must not be null");
     }
-    if (attributes.get("sakai:activity-type") == null) {
+    if (attributes.get(ActivityConstants.PARAM_ACTIVITY_TYPE) == null) {
       throw new IllegalArgumentException("The sakai:activity-type parameter must not be null");
     }
     Map<String, Object> eventProps = Maps.newHashMap();

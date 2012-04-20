@@ -38,6 +38,7 @@ import org.apache.sling.servlets.post.Modification;
 import org.apache.sling.servlets.post.ModificationType;
 import org.apache.sling.servlets.post.SlingPostConstants;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -470,20 +471,20 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
 
           // post the activity for this action
           Map<String, Object> activityProps = new HashMap<String, Object>();
-          activityProps.put("sakai:activity-appid", "Authorizable");
+          activityProps.put(ActivityConstants.PARAM_APPLICATION_ID, "Authorizable");
           if (isGroup) {
-            activityProps.put("sakai:activity-type", "group");
+            activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "group");
             if (isCreate) {
-              activityProps.put("sakai:activityMessage", "GROUP_CREATED");
+              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_CREATED");
             } else {
-              activityProps.put("sakai:activityMessage", "GROUP_UPDATED");
+              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_UPDATED");
             }
           } else {
-            activityProps.put("sakai:activity-type", "user");
+            activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "user");
             if (isCreate) {
-              activityProps.put("sakai:activityMessage", "USER_CREATED");
+              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_CREATED");
             } else {
-              activityProps.put("sakai:activityMessage", "USER_UPDATED");
+              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_UPDATED");
             }
           }
           activityService.postActivity(session.getUserId(), homePath, activityProps);

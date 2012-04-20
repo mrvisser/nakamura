@@ -153,9 +153,9 @@ public class ActivityServiceImplTest extends Assert {
   @Test
   public void postActivity() {
     Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-        "sakai:activity-appid", "Content",
-        "sakai:activity-type", "pooled content",
-        "sakai:activityMessage", "UPDATED_FILE");
+        ActivityConstants.PARAM_APPLICATION_ID, "Content",
+        ActivityConstants.PARAM_ACTIVITY_TYPE, "pooled content",
+        ActivityConstants.PARAM_ACTIVITY_MESSAGE, "UPDATED_FILE");
     this.activityService.postActivity("joe", "/some/path", activityProps);
     Mockito.verify(this.activityService.eventAdmin).postEvent(Matchers.any(Event.class));
   }
@@ -168,7 +168,7 @@ public class ActivityServiceImplTest extends Assert {
   @Test(expected = IllegalArgumentException.class)
   public void postActivityWithMissingMandatoryProp() {
     Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-        "sakai:activity-appid", "Content");
+        ActivityConstants.PARAM_APPLICATION_ID, "Content");
     this.activityService.postActivity("joe", "/some/path", activityProps);
   }
 

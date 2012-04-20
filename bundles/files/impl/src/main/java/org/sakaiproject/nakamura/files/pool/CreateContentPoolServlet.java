@@ -42,6 +42,7 @@ import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.cluster.ClusterTrackingService;
 import org.sakaiproject.nakamura.api.doc.BindingType;
@@ -343,9 +344,9 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
     contentManager.update(content);
 
     Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-        "sakai:activity-appid", "Content",
-        "sakai:activity-type", "pooled content",
-        "sakai:activityMessage", "UPDATED_CONTENT");
+        ActivityConstants.PARAM_APPLICATION_ID, "Content",
+        ActivityConstants.PARAM_ACTIVITY_TYPE, "pooled content",
+        ActivityConstants.PARAM_ACTIVITY_MESSAGE, "UPDATED_CONTENT");
     activityService.postActivity(au.getId(), poolId, activityProps);
 
     // deny anon everything
@@ -394,9 +395,9 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
       accessControlManager.setAcl(Security.ZONE_CONTENT, poolId, modifications.toArray(new AclModification[modifications.size()]));
 
       Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-          "sakai:activity-appid", "Content",
-          "sakai:activity-type", "pooled content",
-          "sakai:activityMessage", "CREATED_FILE");
+          ActivityConstants.PARAM_APPLICATION_ID, "Content",
+          ActivityConstants.PARAM_ACTIVITY_TYPE, "pooled content",
+          ActivityConstants.PARAM_ACTIVITY_MESSAGE, "CREATED_FILE");
       activityService.postActivity(au.getId(), poolId, activityProps);
     } else if (alternativeStream != null && alternativeStream.indexOf("-") > 0) {
       String[] alternativeStreamParts = StringUtils.split(alternativeStream, ALTERNATIVE_STREAM_SELECTOR_SEPARATOR);
@@ -413,9 +414,9 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
       contentManager.update(content);
       contentManager.writeBody(poolId, value.getInputStream(),alternativeStream);
       Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-          "sakai:activity-appid", "Content",
-          "sakai:activity-type", "pooled content",
-          "sakai:activityMessage", "UPDATED_FILE");
+          ActivityConstants.PARAM_APPLICATION_ID, "Content",
+          ActivityConstants.PARAM_ACTIVITY_TYPE, "pooled content",
+          ActivityConstants.PARAM_ACTIVITY_MESSAGE, "UPDATED_FILE");
       activityService.postActivity(au.getId(), poolId, activityProps);
     }
     return contentManager.get(poolId);

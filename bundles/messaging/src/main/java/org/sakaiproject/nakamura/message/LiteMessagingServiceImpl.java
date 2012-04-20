@@ -37,6 +37,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -153,9 +154,9 @@ public class LiteMessagingServiceImpl implements LiteMessagingService {
         ContentManager contentManager = session.getContentManager();
         contentManager.update(msg);
         Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-            "sakai:activity-appid", "Content",
-            "sakai:activity-type", "message",
-            "sakai:activityMessage", "SENT_MESSAGE");
+            ActivityConstants.PARAM_APPLICATION_ID, "Content",
+            ActivityConstants.PARAM_ACTIVITY_TYPE, "message",
+            ActivityConstants.PARAM_ACTIVITY_MESSAGE, "SENT_MESSAGE");
         activityService.postActivity(session.getUserId(), msg.getPath(), activityProps);
         raisePendingMessageEvent(session, msg);
       } catch (StorageClientException e) {

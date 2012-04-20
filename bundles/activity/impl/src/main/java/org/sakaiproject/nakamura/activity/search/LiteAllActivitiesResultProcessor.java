@@ -118,7 +118,7 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
           }
           // KERN-1864 Return comment in activity feed
           if ("sakai/pooled-content".equals(contentNode.getProperty("sling:resourceType"))) {
-            if ("CONTENT_ADDED_COMMENT".equals(activityNode.getProperty("sakai:activityMessage"))) {
+            if ("CONTENT_ADDED_COMMENT".equals(activityNode.getProperty(ActivityConstants.PARAM_ACTIVITY_MESSAGE))) {
               // expecting param ActivityConstants.PARAM_SOURCE to contain the path
               // from the content node to the comment node for this activity.
               if (activityNode.hasProperty(ActivityConstants.PARAM_SOURCE)) {

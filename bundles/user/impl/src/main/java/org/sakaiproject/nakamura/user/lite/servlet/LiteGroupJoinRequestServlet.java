@@ -29,6 +29,7 @@ import org.apache.sling.api.request.RequestParameter;
 import org.apache.sling.api.servlets.SlingAllMethodsServlet;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.doc.BindingType;
 import org.sakaiproject.nakamura.api.doc.ServiceBinding;
@@ -169,9 +170,9 @@ public class LiteGroupJoinRequestServlet extends SlingAllMethodsServlet {
           Dictionary<String, Object> eventProps = new Hashtable<String, Object>();
           eventAdmin.postEvent(new Event(GroupEvent.joinedSite.getTopic(), eventProps));
           Map<String, Object> activityProps = ImmutableMap.<String, Object>of(
-              "sakai:activity-appid", "Authorizable",
-              "sakai:activity-type", "group",
-              "sakai:activityMessage", "JOINED_GROUP");
+              ActivityConstants.PARAM_APPLICATION_ID, "Authorizable",
+              ActivityConstants.PARAM_ACTIVITY_TYPE, "group",
+              ActivityConstants.PARAM_ACTIVITY_MESSAGE, "JOINED_GROUP");
           activityService.postActivity(userId, group.getPath(), activityProps);
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERS_PROP, targetGroup.getId());
           this.authorizableCountChanger.notify(UserConstants.GROUP_MEMBERSHIPS_PROP, userId);

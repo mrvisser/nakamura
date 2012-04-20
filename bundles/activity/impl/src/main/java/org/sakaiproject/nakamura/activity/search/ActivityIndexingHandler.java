@@ -59,8 +59,8 @@ public class ActivityIndexingHandler implements IndexingHandler {
   static {
     ImmutableMap.Builder<String, String> propBuilder = ImmutableMap.builder();
     propBuilder.put("_created", "_created");
-    propBuilder.put("sakai:activity-type", "activity-type");
-    propBuilder.put("sakai:activityMessage", "activityMessage");
+    propBuilder.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "activity-type");
+    propBuilder.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "activityMessage");
     WHITELISTED_PROPS = propBuilder.build();
   }
 
