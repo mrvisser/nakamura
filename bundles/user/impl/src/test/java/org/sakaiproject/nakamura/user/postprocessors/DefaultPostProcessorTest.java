@@ -119,7 +119,6 @@ public class DefaultPostProcessorTest {
     // set up the parameters we'll pass to the process method of the post processor
     session = repository.loginAdministrative("suzy");
     Authorizable funGroup = session.getAuthorizableManager().findAuthorizable("fun-group");
-    DefaultPostProcessor defaultPostProcessor = new DefaultPostProcessor();
 
     // call the object under test
     defaultPostProcessor.process(funGroup, session, mockChange, parameters);

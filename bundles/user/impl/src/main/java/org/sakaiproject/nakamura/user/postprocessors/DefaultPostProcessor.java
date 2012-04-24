@@ -469,26 +469,6 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
           }
           authorizableManager.updateAuthorizable(authorizable);
 
-          // post the activity for this action
-          Map<String, Object> activityProps = new HashMap<String, Object>();
-          activityProps.put(ActivityConstants.PARAM_APPLICATION_ID, "Authorizable");
-          if (isGroup) {
-            activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "group");
-            if (isCreate) {
-              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_CREATED");
-            } else {
-              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_UPDATED");
-            }
-          } else {
-            activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "user");
-            if (isCreate) {
-              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_CREATED");
-            } else {
-              activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_UPDATED");
-            }
-          }
-          activityService.postActivity(session.getUserId(), homePath, activityProps);
-
         }
       } else {
         // Attempt to sync the Acl on the home folder with whatever is present in the
@@ -522,6 +502,27 @@ public class DefaultPostProcessor implements LiteAuthorizablePostProcessor {
         accessControlManager.setAcl(Security.ZONE_AUTHORIZABLES, authorizable.getId(),
             aclModifications.toArray(new AclModification[aclModifications.size()]));
       }
+
+      // post the activity for this action
+      Map<String, Object> activityProps = new HashMap<String, Object>();
+      activityProps.put(ActivityConstants.PARAM_APPLICATION_ID, "Authorizable");
+      if (isGroup) {
+        activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "group");
+        if (isCreate) {
+          activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_CREATED");
+        } else {
+          activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "GROUP_UPDATED");
+        }
+      } else {
+        activityProps.put(ActivityConstants.PARAM_ACTIVITY_TYPE, "user");
+        if (isCreate) {
+          activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_CREATED");
+        } else {
+          activityProps.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, "USER_UPDATED");
+        }
+      }
+      activityService.postActivity(session.getUserId(), homePath, activityProps);
+
     } finally {
       if (adminSession != null) {
         adminSession.logout();
