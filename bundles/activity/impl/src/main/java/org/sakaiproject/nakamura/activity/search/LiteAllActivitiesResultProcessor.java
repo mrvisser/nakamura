@@ -80,32 +80,37 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
       Content activityNode = contentManager.get(path);
       if (activityNode != null ) {
         String sourcePath = (String) activityNode.getProperty(ActivityConstants.PARAM_SOURCE);
-        LOGGER.info("Processing {} {} Source = {} ",new Object[]{path, activityNode.getProperty(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY), sourcePath });
-        Content contentNode = null;
+        LOGGER.debug("Processing {} {} Source = {} ", new Object[]{path, activityNode.getProperty(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY), sourcePath});
+        Content sourceNode = null;
         try {
-          contentNode = contentManager.get(sourcePath);
+          sourceNode = contentManager.get(sourcePath);
         } catch ( AccessDeniedException e ) {
           LOGGER.debug(e.getMessage(),e);
         }
         write.object();
-        if ( contentNode != null ) {
-          ExtendedJSONWriter.writeValueMapInternals(write, contentNode.getProperties());
-          ExtendedJSONWriter.writeValueMapInternals(write, StorageClientUtils.getFilterMap(
-              activityNode.getProperties(), null, null, contentNode.getProperties().keySet(), true));
+        if ( sourceNode != null ) {
+          write.key("sourceNode");
+          write.object();
+          ExtendedJSONWriter.writeValueMapInternals(write, sourceNode.getProperties());
+          write.endObject();
+          ExtendedJSONWriter.writeValueMapInternals(write, activityNode.getProperties());
         } else {
           write.key("_sourceMissing");
           write.value(true);
+          write.key("sourceNode");
+          write.object();
+          write.endObject();
           ExtendedJSONWriter.writeValueMapInternals(write, activityNode.getProperties());
         }
 
         writeUsers(write, authorizableManager, activityNode);
 
-        if (contentNode != null) {
+        if (sourceNode != null) {
           // KERN-1867 Activity feed should return more data about a group
-          if ("sakai/group-home".equals(contentNode.getProperty("sling:resourceType"))) {
+          if ("sakai/group-home".equals(sourceNode.getProperty("sling:resourceType"))) {
             try {
               final Authorizable group = authorizableManager.findAuthorizable(PathUtils
-                      .getAuthorizableId(contentNode.getPath()));
+                      .getAuthorizableId(sourceNode.getPath()));
               final Map<String, Object> basicUserInfo = basicUserInfoService
                       .getProperties(group);
               if (basicUserInfo != null) {
@@ -117,7 +122,7 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
             }
           }
           // KERN-1864 Return comment in activity feed
-          if ("sakai/pooled-content".equals(contentNode.getProperty("sling:resourceType"))) {
+          if ("sakai/pooled-content".equals(sourceNode.getProperty("sling:resourceType"))) {
             if ("CONTENT_ADDED_COMMENT".equals(activityNode.getProperty(ActivityConstants.PARAM_ACTIVITY_MESSAGE))) {
               // expecting param ActivityConstants.PARAM_SOURCE to contain the path
               // from the content node to the comment node for this activity.
@@ -125,7 +130,7 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
                 String sakaiActivitySource = (String) activityNode.getProperty(ActivityConstants.PARAM_SOURCE);
                 if (sakaiActivitySource != null ) {
                   // confirm comment path is related to the current content node.
-                  if (sakaiActivitySource.startsWith(contentNode.getPath())) {
+                  if (sakaiActivitySource.startsWith(sourceNode.getPath())) {
                     Content commentNode = contentManager.get(sakaiActivitySource);
                     if (commentNode != null) {
                       write.key("sakai:comment-body");
