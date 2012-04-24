@@ -17,16 +17,7 @@
  */
 package org.sakaiproject.nakamura.api.activity;
 
-import org.osgi.service.event.EventAdmin;
-import org.sakaiproject.nakamura.api.lite.Session;
-import org.sakaiproject.nakamura.api.lite.StorageClientException;
-import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
-import org.sakaiproject.nakamura.api.lite.content.Content;
-
-import java.io.IOException;
 import java.util.Map;
-
-import javax.servlet.ServletException;
 
 public interface ActivityService {
 
