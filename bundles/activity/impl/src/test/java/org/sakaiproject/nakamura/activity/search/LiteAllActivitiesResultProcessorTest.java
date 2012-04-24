@@ -212,7 +212,7 @@ public class LiteAllActivitiesResultProcessorTest {
     contentManager.update(new Content(activityPath, ImmutableMap.of("sling:resourceType", (Object) ActivityConstants.ACTIVITY_ITEM_RESOURCE_TYPE,
       ActivityConstants.PARAM_SOURCE, contentPath,
       ActivityConstants.PARAM_ACTOR_ID, "alice",
-      "sakai:activityMessage", "CONTENT_ADDED_COMMENT")));
+      ActivityConstants.PARAM_ACTIVITY_MESSAGE, "CONTENT_ADDED_COMMENT")));
 
     // source content (pooled content)
     contentManager.update(new Content(contentPath, ImmutableMap.of("sling:resourceType", (Object)"sakai/pooled-content",

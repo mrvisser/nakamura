@@ -38,6 +38,7 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.servlets.post.SlingPostConstants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.component.ComponentContext;
+import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.doc.BindingType;
 import org.sakaiproject.nakamura.api.doc.ServiceBinding;
 import org.sakaiproject.nakamura.api.doc.ServiceDocumentation;
@@ -119,12 +120,15 @@ public class ProfileUpdateServlet extends SlingAllMethodsServlet {
   @Reference(name = "postOperation", referenceInterface = SparsePostOperation.class, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, policy = ReferencePolicy.DYNAMIC)
   Map<String, SparsePostOperation> postOperations = new ConcurrentHashMap<String, SparsePostOperation>();
 
+  @Reference
+  private ActivityService activityService;
+
   private ComponentContext componentContext;
 
   @Override
   public void init() {
     // default operation: create/modify
-    modifyOperation = new ResourceModifyOperation(getServletContext());
+    modifyOperation = new ResourceModifyOperation(activityService, getServletContext());
   }
   @Override
   protected void doPost(SlingHttpServletRequest request, SlingHttpServletResponse response)

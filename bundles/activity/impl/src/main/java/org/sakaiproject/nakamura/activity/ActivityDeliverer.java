@@ -28,8 +28,8 @@ import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.component.ComponentContext;
 import org.sakaiproject.nakamura.api.activemq.ConnectionFactoryService;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
-import org.sakaiproject.nakamura.api.activity.ActivityRoute;
-import org.sakaiproject.nakamura.api.activity.ActivityRouterManager;
+import org.sakaiproject.nakamura.activity.routing.ActivityRoute;
+import org.sakaiproject.nakamura.activity.routing.ActivityRouterManager;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -52,7 +52,7 @@ import javax.jms.MessageListener;
 import javax.jms.Topic;
 
 @Component(immediate = true)
-public class LiteActivityListener implements MessageListener {
+public class ActivityDeliverer implements MessageListener {
 
   // References/properties need for JMS
   @Reference
@@ -65,7 +65,7 @@ public class LiteActivityListener implements MessageListener {
   protected ActivityRouterManager activityRouterManager;
 
   public static final Logger LOG = LoggerFactory
-      .getLogger(LiteActivityListener.class);
+      .getLogger(ActivityDeliverer.class);
 
   private Connection connection = null;
 
