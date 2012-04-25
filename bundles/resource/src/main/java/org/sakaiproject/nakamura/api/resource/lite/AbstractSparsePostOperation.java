@@ -185,17 +185,22 @@ public abstract class AbstractSparsePostOperation implements SparsePostOperation
     }
 
   private Map<String, Object> getActivityProperties(SlingHttpServletRequest request) {
-        RequestParameter messageParam = request.getRequestParameter(ActivityConstants.PARAM_ACTIVITY_MESSAGE);
+        // activity params will come to us prefixed with ":" which tells us not to save them on
+        // the node that's being posted to.
+        RequestParameter messageParam = request.getRequestParameter(SlingPostConstants.RP_PREFIX +
+            ActivityConstants.PARAM_ACTIVITY_MESSAGE);
         if ( messageParam == null ) {
           return null;
         }
         String appID = "Content";
         String type = "pooled content";
-        RequestParameter appIDParam = request.getRequestParameter(ActivityConstants.PARAM_APPLICATION_ID);
+        RequestParameter appIDParam = request.getRequestParameter(SlingPostConstants.RP_PREFIX +
+            ActivityConstants.PARAM_APPLICATION_ID);
         if ( appIDParam != null ) {
           appID = appIDParam.getString();
         }
-        RequestParameter typeParam = request.getRequestParameter(ActivityConstants.PARAM_ACTIVITY_TYPE);
+        RequestParameter typeParam = request.getRequestParameter(SlingPostConstants.RP_PREFIX +
+            ActivityConstants.PARAM_ACTIVITY_TYPE);
         if ( typeParam != null ) {
           type = typeParam.getString();
         }
