@@ -137,6 +137,12 @@
       <groupId>org.apache.sling</groupId>
       <artifactId>org.apache.sling.commons.testing</artifactId>
       <scope>test</scope>
+      <exclusions>
+      	<exclusion>
+      	  <groupId>org.apache.lucene</groupId>
+      	  <artifactId>lucene-core</artifactId>
+      	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.sling</groupId>
@@ -161,6 +167,12 @@
     <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.solr</artifactId>
+      <exclusions>
+      	<exclusion>
+      	  <groupId>org.apache.lucene</groupId>
+      	  <artifactId>lucene-core</artifactId>
+      	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
     	<groupId>org.sakaiproject.nakamura</groupId>
