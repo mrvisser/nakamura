@@ -125,17 +125,9 @@ public class BasicLtiWidgetCopyCleanerTest {
     // second, lock down the ltiKeys
     String ltiKeysFrom = StorageClientUtils.newPath(from, ltiKeysPathRelative);
     accessControlSensitiveNode(ltiKeysFrom, cleaner.getRepository(), "test");
+    // a little sanity check to ensure the 'test' user cannot access the keys
+    Assert.assertNull(testContentManager.get(ltiKeysFrom));
     
-    // third, copy it to the 'to' path as the unprivileged user
-    // little permission sanity check, verify the 'test' user cannot access the source keys
-    boolean hasAccess = true;
-    try {
-      Content keys = testContentManager.get(ltiKeysFrom);
-      keys.getProperty("ltikey");
-    } catch (AccessDeniedException e) {
-      hasAccess = false;
-    }
-    Assert.assertFalse(hasAccess);
     runCopyOperation(from, to, testSession);
     
     // fourth, clean it up as the unprivileged user

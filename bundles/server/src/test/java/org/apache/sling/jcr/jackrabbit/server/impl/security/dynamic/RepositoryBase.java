@@ -17,6 +17,8 @@
  */
 package org.apache.sling.jcr.jackrabbit.server.impl.security.dynamic;
 
+import com.google.common.collect.Maps;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.jackrabbit.core.config.RepositoryConfig;
 import org.apache.sling.jcr.jackrabbit.server.impl.Activator;
@@ -105,7 +107,9 @@ public class RepositoryBase {
     Mockito.when(bundleContext.getProperty("sling.home")).thenReturn("target/testrepo");
     sakaiActivator.start(bundleContext);
     
-    nakamuraRepository = (new BaseMemoryRepository()).getRepository();
+    // disabling indexing to avoid lucene runtime conflict between nakamura core and jackrabbit
+    nakamuraRepository = (new BaseMemoryRepository(false)).getRepository();
+    
     connectionPool = nakamuraRepository.getConnectionPool();
     client = connectionPool.getClient();
     SparseRepositoryHolder.setSparseRespository(nakamuraRepository);
@@ -114,6 +118,7 @@ public class RepositoryBase {
   public void stop() {
     client.close();
     repository.shutdown();
+    nakamuraRepository.deactivate(Maps.<String, Object>newHashMap());
     sakaiActivator.stop(bundleContext);
   }
 

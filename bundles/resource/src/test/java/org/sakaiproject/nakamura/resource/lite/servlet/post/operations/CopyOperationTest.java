@@ -44,6 +44,7 @@ import org.sakaiproject.nakamura.resource.lite.SparsePostOperationServiceImpl;
 import org.sakaiproject.nakamura.util.ContentUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.LinkedList;
@@ -206,8 +207,8 @@ public class CopyOperationTest {
     Assert.assertNotNull("Source was deleted", c);
     InputStream stream = contentManager.getInputStream(c.getPath());
     Assert.assertNotNull("Stream for source content was null", stream);
-    Assert.assertEquals("Source content stream was garbled up.", "source", IOUtils.toString(stream, "UTF-8"));
-    stream.close();
+    
+    Assert.assertEquals("Source content stream was garbled up.", "source", readToString(stream));
     Assert.assertEquals("source", c.getProperty("prop"));
     
     //verify destination
@@ -215,8 +216,7 @@ public class CopyOperationTest {
     Assert.assertNotNull("Source was not copied at all", c);
     stream = contentManager.getInputStream(c.getPath());
     Assert.assertNotNull("Stream for target content was null", stream);
-    Assert.assertEquals("Destination content stream was garbled up.", "source", IOUtils.toString(stream, "UTF-8"));
-    stream.close();
+    Assert.assertEquals("Destination content stream was garbled up.", "source", readToString(stream));
     Assert.assertEquals("source", c.getProperty("prop"));
   }
 
@@ -285,6 +285,19 @@ public class CopyOperationTest {
         
   }
 
+  private String readToString(InputStream is) {
+    ByteArrayOutputStream os = null;
+    try {
+      os = new ByteArrayOutputStream();
+      IOUtils.copy(is, os);
+      return new String(os.toByteArray(), "UTF-8");
+    } catch (IOException e) {
+      IOUtils.closeQuietly(is);
+      IOUtils.closeQuietly(os);
+    }
+    return null;
+  }
+  
   private ClassLoader getClassLoader() {
     return Thread.currentThread().getContextClassLoader();
   }

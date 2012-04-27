@@ -102,10 +102,6 @@
           <groupId>org.apache.tika</groupId>
           <artifactId>tika-parsers</artifactId>
         </exclusion>
-        <exclusion>
-          <groupId>org.apache.lucene</groupId>
-          <artifactId>lucene-core</artifactId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>

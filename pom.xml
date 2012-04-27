@@ -377,7 +377,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <slf4j.version>1.6.3</slf4j.version>
-    <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+    <maven.test.redirectTestOutputToFile>false</maven.test.redirectTestOutputToFile>
   </properties>
   <build>
     <extensions>
