@@ -25,15 +25,20 @@ import org.apache.felix.scr.annotations.sling.SlingServlet;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.request.RequestParameter;
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
 import org.sakaiproject.nakamura.activity.Activity;
 import org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService;
+import org.sakaiproject.nakamura.api.activity.ActivityUtils;
 import org.sakaiproject.nakamura.api.search.solr.Result;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchBatchResultProcessor;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchConstants;
+import org.sakaiproject.nakamura.api.search.solr.SolrSearchPropertyProvider;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -44,6 +49,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.jcr.Node;
+import javax.jcr.Property;
+import javax.jcr.PropertyIterator;
+import javax.jcr.RepositoryException;
 import javax.servlet.ServletException;
 
 /**
@@ -53,9 +62,17 @@ import javax.servlet.ServletException;
 public class ActivitySearchServlet extends SlingSafeMethodsServlet {
   private static final long serialVersionUID = 1062929177008566552L;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(ActivitySearchServlet.class);
+  
   @Reference
   ActivityDataStorageService activityService;
-  
+
+  /**
+   * TODO: All these reference bindings are redundant -- I mistakenly thought that the
+   * search batch result processors are not exposed externally, but they're actually
+   * published services. These can all be removed in favor of the search trackers, but
+   * the unit tests will need to be updated to mock them.
+   */
   @Reference(referenceInterface = SolrSearchResultProcessor.class,
       bind = "bindProcessor", unbind = "unbindProcessor",
       cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE,
@@ -69,7 +86,7 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
       policy = ReferencePolicy.DYNAMIC)
   private Map<String, SolrSearchBatchResultProcessor> resultBatchProcessorMap =
       new HashMap<String, SolrSearchBatchResultProcessor>();
-  
+
   /**
    * {@inheritDoc}
    * @see org.apache.sling.api.servlets.SlingSafeMethodsServlet#doGet(org.apache.sling.api.SlingHttpServletRequest, org.apache.sling.api.SlingHttpServletResponse)
@@ -78,7 +95,11 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
   protected void doGet(SlingHttpServletRequest request, SlingHttpServletResponse response)
       throws ServletException, IOException {
     
+    // TODO: support 'NOT'.. such as the all.json "-path:_myFeed" query. May just need to
+    // expose a find by 'Query' object query to ActivityDataStorageService.
+    
     String path = cleanSingle(request.getRequestParameter("path"));
+    String pNodePath = cleanSingle(request.getRequestParameter("p"));
     String[] groups = clean(request.getRequestParameters("group"));
     String[] activityTypes = clean(request.getRequestParameters("activityType"));
     String[] activityMessages = clean(request.getRequestParameters("activityMessage"));
@@ -86,12 +107,45 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
     String batchProcessorStr = cleanSingle(request.getRequestParameter(SolrSearchConstants.SAKAI_BATCHRESULTPROCESSOR));
     String sortOrder = cleanSingle(request.getRequestParameter("sortOrder"));
     
-    List<String> pathList = new LinkedList<String>();
-    
-    if (path != null) {
-      pathList.add(path);
+    Resource resource = request.getResource();
+    if (resource != null) {
+      Node node = resource.adaptTo(Node.class);
+      try {
+        if (node.hasNode(SolrSearchConstants.SAKAI_QUERY_TEMPLATE_DEFAULTS)) {
+          Node defaults = node.getNode(SolrSearchConstants.SAKAI_QUERY_TEMPLATE_DEFAULTS);
+          PropertyIterator properties = defaults.getProperties();
+          while (properties.hasNext()) {
+            // can only default path and sortOrder at this point.
+            Property property = properties.nextProperty();
+            if (path == null && "path".equals(property.getName())) {
+              path = property.getString();
+            } else if (sortOrder == null && "sortOrder".equals(property.getName())) {
+              sortOrder = property.getString();
+            }
+          }
+        }
+      } catch (RepositoryException e) {
+        LOGGER.warn("Could not load default search properties.", e);
+      }
     }
     
+    List<String> pathList = new LinkedList<String>();
+    if (path != null) {
+      if (path.equals("_myFeed")) {
+        // supports myfeed.json
+        String userFeed = ActivityUtils.getUserFeed(request.getRemoteUser());
+        if (!StringUtils.isBlank(userFeed)) {
+          pathList.add(userFeed.trim());
+        }
+      } else if (path.equals("_pNodePath")) {
+        // supports pooledcontent.json
+        pathList.add(pNodePath+"/activityFeed");
+      } else {
+        pathList.add(path);
+      }
+    }
+    
+    // add group criteria
     if (groups.length > 0) {
       for (String group : groups) {
         pathList.add(String.format("/group/%s/activityFeed", group));
@@ -194,7 +248,7 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
           @Override
           public String getPath() {
             // this likely wants the activity path node, so we should give the full path
-            return String.format("%s/%s", activity.getPath(), activity.getEid());
+            return String.format("%s/%s", activity.getParentPath(), activity.getEid());
           }
 
           @Override
@@ -239,7 +293,7 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
   void unbindBatchProcessor(SolrSearchBatchResultProcessor helper, Map<?, ?> props) {
     resultBatchProcessorMap.remove((String)props.get(SolrSearchConstants.REG_PROCESSOR_NAMES));
   }
-  
+
   private String cleanSingle(RequestParameter param) {
     if (!isEmpty(param)) {
       return param.getString().trim();

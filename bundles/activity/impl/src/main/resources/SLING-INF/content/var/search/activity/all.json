@@ -1,14 +1,10 @@
 {
   "sakai:query-template":"resourceType:sakai/activity AND -path:${_myFeed} ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
-  "sakai:query-template-options":{
-    "sort":"_created desc"
-  },
   "sakai:query-template-defaults":{
-    "sortOn":"_created",
     "sortOrder":"desc"
   },
   "sling:resourceType":"sakai/activity/search",
-  "sakai:propertyprovider":[ "PrivateActivityFeed", "ActivityType", "ActivityMessage" ],
+  "sakai:propertyprovider":[ "PrivateActivityFeed" ],
   "sakai:resultprocessor":"LiteAllActivities",
   "sakai:title":"Activity - All System Activities",
   "sakai:shortDescription":"Shows the latest activities in the system.",

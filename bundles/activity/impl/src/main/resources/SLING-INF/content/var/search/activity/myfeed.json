@@ -1,14 +1,9 @@
 {
-  "sakai:query-template":"path:${_myFeed} AND resourceType:sakai/activity ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
-  "sakai:query-template-options":{
-    "sort":"${sortOn} ${sortOrder}"
-  },
   "sakai:query-template-defaults":{
-    "sortOn":"_created",
     "sortOrder":"desc",
+    "path":"_myFeed"
   },
   "sling:resourceType":"sakai/activity/search",
-  "sakai:propertyprovider":[ "PrivateActivityFeed", "ActivityType", "ActivityMessage" ],
   "sakai:resultprocessor":"LiteAllActivities",
   "sakai:title":"Activity - My feed.",
   "sakai:shortDescription":"Shows the latest activities for the current user.",

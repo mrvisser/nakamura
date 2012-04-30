@@ -64,7 +64,7 @@ public class ActivityDataStorageServiceTest {
     created.add(Calendar.HOUR_OF_DAY, -1);
     
     activity.setEid("someEid");
-    activity.setPath("/the/path");
+    activity.setParentPath("/the/path");
     activity.setOccurred(created.getTime());
     activity.setActor("test");
     activity.setType("type");
@@ -77,7 +77,7 @@ public class ActivityDataStorageServiceTest {
     Assert.assertNotNull(readActivity);
     Assert.assertNotNull(activity.getId());
     Assert.assertEquals("someEid", activity.getEid());
-    Assert.assertEquals("/the/path", activity.getPath());
+    Assert.assertEquals("/the/path", activity.getParentPath());
     Assert.assertEquals(created.getTimeInMillis(), activity.getOccurred().getTime());
     Assert.assertEquals("test", activity.getActor());
     Assert.assertEquals("type", activity.getType());
@@ -91,7 +91,7 @@ public class ActivityDataStorageServiceTest {
     
     Activity activity1 = new Activity();
     activity1.setEid("eid1");
-    activity1.setPath("/the/path");
+    activity1.setParentPath("/the/path");
     activity1.setOccurred(created1.getTime());
     activity1.setActor("test");
     activity1.setType("type1");
@@ -100,7 +100,7 @@ public class ActivityDataStorageServiceTest {
     
     Activity activity2 = new Activity();
     activity2.setEid("eid2");
-    activity2.setPath("/the/path");
+    activity2.setParentPath("/the/path");
     activity2.setOccurred(new Date());
     activity2.setActor("test");
     activity2.setType("type2");

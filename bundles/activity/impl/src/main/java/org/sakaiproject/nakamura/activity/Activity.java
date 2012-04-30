@@ -43,14 +43,14 @@ import javax.persistence.Transient;
 @Entity
 @Table(name="activity_activity")
 @org.hibernate.annotations.Table(appliesTo="activity_activity", indexes = {
-      @Index(name="idx_activity_path", columnNames={"path", "occurred"})
+      @Index(name="idx_activity_path", columnNames={"parent_path", "occurred"})
   })
-public class Activity implements Serializable {
+public class Activity implements Serializable, Cloneable {
   private static final long serialVersionUID = -5886999531043942605L;
   
   private Long id;
   private String eid;
-  private String path;
+  private String parentPath;
   private String type;
   private String message;
   private Date occurred;
@@ -66,7 +66,7 @@ public class Activity implements Serializable {
    * @param content
    */
   public Activity(String path, Date occurred, Map<String, Object> content) {
-    this.path = StorageClientUtils.getParentObjectPath(path);
+    this.parentPath = StorageClientUtils.getParentObjectPath(path);
     this.eid = StorageClientUtils.getObjectName(path);
     this.occurred = occurred;
     
@@ -86,31 +86,12 @@ public class Activity implements Serializable {
     }
   }
   
-  @Transient
-  public Map<String, Object> createContentMap() {
-    HashMap<String, Object> content = new HashMap<String, Object>();
-    
-    if (extraProperties != null) {
-      content.putAll(extraProperties);
-    }
-    
-    if (type != null)
-      content.put(ActivityConstants.PARAM_ACTIVITY_TYPE, type);
-    
-    if (message != null)
-      content.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, message);
-    
-    if (actor != null)
-      content.put(ActivityConstants.PARAM_ACTOR_ID, actor);
-    
-    return content;
-  }
-  
   /**
    * @return the internally-generated id of the activity
    */
   @Id
   @GeneratedValue(strategy=GenerationType.AUTO)
+  @Column(name="id")
   public Long getId() {
     return id;
   }
@@ -125,7 +106,7 @@ public class Activity implements Serializable {
   /**
    * @return the externally-generated ID of the activity.
    */
-  @Column(length=54)
+  @Column(name="eid", length=54)
   public String getEid() {
     return eid;
   }
@@ -139,24 +120,24 @@ public class Activity implements Serializable {
 
   /**
    * @return the path under which this activity exists. A canonical path to this exact activity
-   * would be {@code getPath()+"/"+getEid()}
+   * would be {@code getParentPath()+"/"+getEid()}
    */
-  @Column(length=256)
-  public String getPath() {
-    return path;
+  @Column(name="parent_path", length=256)
+  public String getParentPath() {
+    return parentPath;
   }
   
   /**
-   * @param path the path to set
+   * @param parentPath the path to set
    */
-  public void setPath(String path) {
-    this.path = path;
+  public void setParentPath(String parentPath) {
+    this.parentPath = parentPath;
   }
   
   /**
    * @return the type
    */
-  @Column(length=32)
+  @Column(name="type", length=32)
   public String getType() {
     return type;
   }
@@ -171,7 +152,7 @@ public class Activity implements Serializable {
   /**
    * @return the message
    */
-  @Column(length=256)
+  @Column(name="message", length=256)
   public String getMessage() {
     return message;
   }
@@ -201,7 +182,7 @@ public class Activity implements Serializable {
   /**
    * @return the actor
    */
-  @Column(length=32)
+  @Column(name="actor", length=32)
   public String getActor() {
     return actor;
   }
@@ -226,6 +207,48 @@ public class Activity implements Serializable {
    */
   public void setExtraProperties(Map<String, Serializable> extraProperties) {
     this.extraProperties = extraProperties;
+  }
+  
+  
+  @Transient
+  public Map<String, Object> createContentMap() {
+    HashMap<String, Object> content = new HashMap<String, Object>();
+    
+    if (extraProperties != null) {
+      content.putAll(extraProperties);
+    }
+    
+    if (type != null)
+      content.put(ActivityConstants.PARAM_ACTIVITY_TYPE, type);
+    
+    if (message != null)
+      content.put(ActivityConstants.PARAM_ACTIVITY_MESSAGE, message);
+    
+    if (actor != null)
+      content.put(ActivityConstants.PARAM_ACTOR_ID, actor);
+    
+    return content;
+  }
+  
+  @Transient
+  @Override
+  public Activity clone() {
+    Activity clone = new Activity();
+    clone.setActor(getActor());
+    clone.setEid(getEid());
+    clone.setMessage(getMessage());
+    clone.setOccurred(getOccurred());
+    clone.setParentPath(getParentPath());
+    clone.setType(getType());
+    
+    if (extraProperties != null) {
+      clone.setExtraProperties(new HashMap<String, Serializable>());
+      for (String key : extraProperties.keySet()) {
+        clone.getExtraProperties().put(key, extraProperties.get(key));
+      }
+    }
+    
+    return clone;
   }
 
 }

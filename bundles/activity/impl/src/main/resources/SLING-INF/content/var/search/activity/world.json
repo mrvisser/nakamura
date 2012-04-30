@@ -1,15 +1,10 @@
 {
-  "sakai:query-template": "${_pGroupQuery} AND resourceType:sakai/activity ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
-  "sakai:query-template-options": {
-    "sort": "${sortOn} ${sortOrder}"
-  },
   "sakai:query-template-defaults": {
-    "sortOn": "_created",
     "sortOrder": "desc"
   },
   "sling:resourceType": "sakai/activity/search",
   "sakai:resultprocessor": "LiteAllActivities",
-  "sakai:propertyprovider": [ "WorldActivityFeed", "ActivityType", "ActivityMessage" ],
+  "sakai:propertyprovider": [ "WorldActivityFeed" ],
   "sakai:title": "Activity - Worlds Feed",
   "sakai:shortDescription": "Returns recent activity nodes for the groups that make up a world.",
   "sakai:parameters" : [

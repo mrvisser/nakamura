@@ -1,15 +1,11 @@
 {
-  "sakai:query-template":"path:${_pNodePath}/activityFeed AND resourceType:sakai/activity ${_pActivityTypeQuery} ${_pActivityMessageQuery}",
-  "sakai:query-template-options":{
-    "sort":"${sortOn} ${sortOrder}"
-  },
   "sakai:query-template-defaults":{
-    "sortOn":"_created",
-    "sortOrder":"desc"
+    "sortOrder":"desc",
+    "path": "_pNodePath"
   },
   "sling:resourceType":"sakai/activity/search",
   "sakai:resultprocessor":"LiteAllActivities",
-  "sakai:propertyprovider":[ "PooledContentNode", "ActivityType", "ActivityMessage" ],
+  "sakai:propertyprovider":[ "PooledContentNode" ],
   "sakai:title":"Activity - Pooled Content Feed",
   "sakai:shortDescription":"Returns recent activity nodes under a Pooled Content node.",
   "sakai:description":"Returns recent activity nodes under a Pooled Content node.",

@@ -17,19 +17,17 @@
  */
 package org.sakaiproject.nakamura.activity;
 
-import static org.sakaiproject.nakamura.api.activity.ActivityConstants.PARAM_ACTOR_ID;
-
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.component.ComponentContext;
-import org.sakaiproject.nakamura.api.activemq.ConnectionFactoryService;
-import org.sakaiproject.nakamura.api.activity.ActivityConstants;
+import org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService;
 import org.sakaiproject.nakamura.activity.routing.ActivityRoute;
 import org.sakaiproject.nakamura.activity.routing.ActivityRouterManager;
+import org.sakaiproject.nakamura.api.activemq.ConnectionFactoryService;
+import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -40,8 +38,9 @@ import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
 import javax.jcr.RepositoryException;
 import javax.jms.Connection;
@@ -63,7 +62,9 @@ public class ActivityDeliverer implements MessageListener {
   protected Repository sparseRepository;
   @Reference
   protected ActivityRouterManager activityRouterManager;
-
+  @Reference
+  protected ActivityDataStorageService storage;
+  
   public static final Logger LOG = LoggerFactory
       .getLogger(ActivityDeliverer.class);
 
@@ -115,10 +116,10 @@ public class ActivityDeliverer implements MessageListener {
       final String activityItemPath = message
           .getStringProperty(ActivityConstants.EVENT_PROP_PATH);
       Session session = sparseRepository.loginAdministrative(); 
-      ContentManager contentManager = session.getContentManager();
       try {
-        Content activity = contentManager.get(activityItemPath);
-        if (activity == null || !activity.hasProperty(PARAM_ACTOR_ID)) {
+        Activity activity = storage.load(StorageClientUtils.getParentObjectPath(activityItemPath),
+            StorageClientUtils.getObjectName(activityItemPath));
+        if (activity == null || activity.getActor() == null) {
           // we must know the actor
           throw new IllegalStateException(
               "Could not determine actor of activity: " + activity);
@@ -126,7 +127,7 @@ public class ActivityDeliverer implements MessageListener {
   
         // Get all the routes for this activity.
         List<ActivityRoute> routes = activityRouterManager
-            .getActivityRoutes(activity, session);
+            .getActivityRoutes(new Content(activityItemPath, activity.createContentMap()), session);
   
         // Copy the activity items to each endpoint.
         for (ActivityRoute route : routes) {
@@ -162,22 +163,32 @@ public class ActivityDeliverer implements MessageListener {
    * @throws StorageClientException 
    * @throws AccessDeniedException 
    */
-  protected void deliverActivityToFeed(Session session, Content activity,
+  protected void deliverActivityToFeed(Session session, Activity activity,
       String activityFeedPath) throws AccessDeniedException, StorageClientException {
     // ensure the activityFeed node with the proper type
     ContentManager contentManager = session.getContentManager();
     String deliveryPath = StorageClientUtils
-        .newPath(activityFeedPath, StorageClientUtils.getObjectName(activity.getPath()));
-    Builder<String, Object> contentProperties = ImmutableMap.builder();
-    for ( Entry<String, Object> e : activity.getProperties().entrySet()) {
-      if (!JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY.equals(e.getKey())) {
-        contentProperties.put(e.getKey(), e.getValue());
-      }
-    }
-    contentProperties.put(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY,
+        .newPath(activityFeedPath, StorageClientUtils.getObjectName(activity.getEid()));
+    
+    // we are copying this activity to the delivery location
+    Activity deliveredActivity = activity.clone();
+    
+    // set the path to the new copied location
+    deliveredActivity.setParentPath(StorageClientUtils.getParentObjectPath(deliveryPath));
+    
+    // give it resource type sakai/activity, not sakai/activity-posted
+    if (deliveredActivity.getExtraProperties() == null)
+      deliveredActivity.setExtraProperties(new HashMap<String, Serializable>());
+    deliveredActivity.getExtraProperties().put(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY,
         ActivityConstants.ACTIVITY_ITEM_RESOURCE_TYPE);
-    Content content = new Content(deliveryPath, contentProperties.build());
+    
+    // store the content "stub"
+    Content content = new Content(deliveryPath, ImmutableMap.<String, Object>of(
+        JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY, ActivityConstants.ACTIVITY_ITEM_RESOURCE_TYPE));
     contentManager.update(content);
+    
+    // save the activity entity in the activity storage
+    storage.save(deliveredActivity);
   }
 
 }

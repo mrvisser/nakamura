@@ -48,11 +48,11 @@ public class ActivityTestHelper {
     return pool;
   }
   
-  public static Activity createActivity(String eid, String path, String type,
+  public static Activity createActivity(String eid, String parentPath, String type,
       String message, Date occurred, String actor, Map<String, Serializable> props) {
     Activity activity = new Activity();
     activity.setEid(eid);
-    activity.setPath(path);
+    activity.setParentPath(parentPath);
     activity.setType(type);
     activity.setMessage(message);
     activity.setOccurred(occurred);

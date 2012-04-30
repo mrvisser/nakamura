@@ -87,7 +87,7 @@ public class ActivityDataStorageServiceImpl implements ActivityDataStorageServic
     try {
       s = pool.getSession();
       Criteria criteria = s.createCriteria(Activity.class);
-      criteria.add(Restrictions.eq("path", path));
+      criteria.add(Restrictions.eq("parentPath", path));
       criteria.add(Restrictions.eq("eid", eid));
       return (Activity) criteria.uniqueResult();
     } finally {
@@ -109,7 +109,7 @@ public class ActivityDataStorageServiceImpl implements ActivityDataStorageServic
       Criteria criteria = s.createCriteria(Activity.class);
       
       if (paths != null && paths.length > 0) {
-        criteria.add(Restrictions.in("path", paths));
+        criteria.add(Restrictions.in("parentPath", paths));
       }
       
       if (types != null && types.length > 0) {
