@@ -17,21 +17,9 @@
  */
 package org.sakaiproject.nakamura.api.activity;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
 import org.sakaiproject.nakamura.util.PathUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Map;
 
 /**
  *

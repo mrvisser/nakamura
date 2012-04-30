@@ -19,7 +19,9 @@
 package org.sakaiproject.nakamura.activity;
 
 import com.google.common.collect.ImmutableMap;
+
 import junit.framework.Assert;
+
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,10 +29,11 @@ import org.mockito.Matchers;
 import org.mockito.Mockito;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageServiceImpl;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
-import org.sakaiproject.nakamura.api.activity.ActivityUtils;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
@@ -54,6 +57,8 @@ public class ActivityServiceImplTest extends Assert {
   public void setup() throws Exception {
     this.activityService = new ActivityServiceImpl();
     this.activityService.eventAdmin = Mockito.mock(EventAdmin.class);
+    this.activityService.storage = new ActivityDataStorageServiceImpl(
+        ActivityTestHelper.createPoolInMemory());
     repository = new BaseMemoryRepository().getRepository();
     this.activityService.repository = repository;
 
@@ -126,12 +131,15 @@ public class ActivityServiceImplTest extends Assert {
     // make sure at least one activity node exists under the activity store
     boolean activityFound = false;
     for (Content item : store.listChildren()) {
-      if (item.getProperty(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY).equals
-          (ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE)) {
+      Activity activity = activityService.storage.load(StorageClientUtils.getParentObjectPath(
+          item.getPath()), StorageClientUtils.getObjectName(item.getPath()));
+      Map<String, Object> itemProperties = activity.createContentMap();
+      if (ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE.equals(
+          itemProperties.get(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY))) {
         activityFound = true;
-        Assert.assertEquals("alice", item.getProperty(ActivityConstants.PARAM_ACTOR_ID));
-        Assert.assertEquals("/some/arbitrary/path", item.getProperty(ActivityConstants.PARAM_SOURCE));
-        Assert.assertEquals("someVal", item.getProperty("someProp"));
+        Assert.assertEquals("alice", itemProperties.get(ActivityConstants.PARAM_ACTOR_ID));
+        Assert.assertEquals("/some/arbitrary/path", itemProperties.get(ActivityConstants.PARAM_SOURCE));
+        Assert.assertEquals("someVal", itemProperties.get("someProp"));
       }
     }
     Assert.assertTrue(activityFound);
@@ -177,7 +185,7 @@ public class ActivityServiceImplTest extends Assert {
       NoSuchAlgorithmException {
     List<String> ids = new ArrayList<String>();
     for (int i = 0; i < 1000; i++) {
-      String s = this.activityService.createId();
+      String s = ActivityServiceImpl.createId();
       if (ids.contains(s)) {
         org.junit.Assert.fail("This id is already in the list.");
       }

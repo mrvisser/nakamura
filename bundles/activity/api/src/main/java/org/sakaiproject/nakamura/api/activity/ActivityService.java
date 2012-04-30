@@ -30,5 +30,5 @@ public interface ActivityService {
    * @param attributes attributes, required, and must contain sakai:activity-appid and sakai:activity-type.
    */
   void postActivity(String userId, String path, Map<String, Object> attributes);
-
+  
 }

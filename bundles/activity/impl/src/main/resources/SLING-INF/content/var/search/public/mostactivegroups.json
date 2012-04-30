@@ -8,7 +8,7 @@
     "sortOn": "timestamp",
     "sortOrder": "desc"
   },
-  "sling:resourceType": "sakai/solr-search",
+  "sling:resourceType": "sakai/activity/search",
   "sakai:propertyprovider": "MostActiveContentPropertyProvider",
   "sakai:batchresultprocessor": "MostActiveGroups",
   "sakai:title": "Groups - Most Active",

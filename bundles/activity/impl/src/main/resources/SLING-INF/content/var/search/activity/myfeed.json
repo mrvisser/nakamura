@@ -7,7 +7,7 @@
     "sortOn":"_created",
     "sortOrder":"desc",
   },
-  "sling:resourceType":"sakai/solr-search",
+  "sling:resourceType":"sakai/activity/search",
   "sakai:propertyprovider":[ "PrivateActivityFeed", "ActivityType", "ActivityMessage" ],
   "sakai:resultprocessor":"LiteAllActivities",
   "sakai:title":"Activity - My feed.",

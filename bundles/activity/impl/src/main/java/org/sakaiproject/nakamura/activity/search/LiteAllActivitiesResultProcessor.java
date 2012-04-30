@@ -25,7 +25,7 @@ import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
-import org.apache.sling.jcr.resource.JcrResourceConstants;
+import org.sakaiproject.nakamura.activity.Activity;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -69,6 +69,15 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
   @Reference
   protected BasicUserInfoService basicUserInfoService;
 
+  public LiteAllActivitiesResultProcessor() {
+  }
+  
+  public LiteAllActivitiesResultProcessor(SolrSearchServiceFactory searchServiceFactory,
+      BasicUserInfoService basicUserInfoService) {
+    this.searchServiceFactory = searchServiceFactory;
+    this.basicUserInfoService = basicUserInfoService;
+  }
+  
   public void writeResult(SlingHttpServletRequest request, JSONWriter write, Result result)
       throws JSONException {
     Session session = StorageClientUtils.adaptToSession(request.getResourceResolver()
@@ -77,10 +86,11 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
       ContentManager contentManager = session.getContentManager();
       AuthorizableManager authorizableManager = session.getAuthorizableManager();
       String path = result.getPath();
-      Content activityNode = contentManager.get(path);
-      if (activityNode != null ) {
-        String sourcePath = (String) activityNode.getProperty(ActivityConstants.PARAM_SOURCE);
-        LOGGER.debug("Processing {} {} Source = {} ", new Object[]{path, activityNode.getProperty(JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY), sourcePath});
+      Activity activity = (Activity) result.getFirstValue("activity");
+      if (activity != null ) {
+        Map<String, Object> activityNode = activity.createContentMap();
+        String sourcePath = (String) activity.getExtraProperties().get(ActivityConstants.PARAM_SOURCE);
+        LOGGER.debug("Processing {} {} Source = {} ", new Object[]{path, "sakai/activity", sourcePath});
         Content sourceNode = null;
         try {
           sourceNode = contentManager.get(sourcePath);
@@ -93,14 +103,14 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
           write.object();
           ExtendedJSONWriter.writeValueMapInternals(write, sourceNode.getProperties());
           write.endObject();
-          ExtendedJSONWriter.writeValueMapInternals(write, activityNode.getProperties());
+          ExtendedJSONWriter.writeValueMapInternals(write, activity.createContentMap());
         } else {
           write.key("_sourceMissing");
           write.value(true);
           write.key("sourceNode");
           write.object();
           write.endObject();
-          ExtendedJSONWriter.writeValueMapInternals(write, activityNode.getProperties());
+          ExtendedJSONWriter.writeValueMapInternals(write, activity.createContentMap());
         }
 
         writeUsers(write, authorizableManager, activityNode);
@@ -123,11 +133,11 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
           }
           // KERN-1864 Return comment in activity feed
           if ("sakai/pooled-content".equals(sourceNode.getProperty("sling:resourceType"))) {
-            if ("CONTENT_ADDED_COMMENT".equals(activityNode.getProperty(ActivityConstants.PARAM_ACTIVITY_MESSAGE))) {
+            if ("CONTENT_ADDED_COMMENT".equals(activityNode.get(ActivityConstants.PARAM_ACTIVITY_MESSAGE))) {
               // expecting param ActivityConstants.PARAM_SOURCE to contain the path
               // from the content node to the comment node for this activity.
-              if (activityNode.hasProperty(ActivityConstants.PARAM_SOURCE)) {
-                String sakaiActivitySource = (String) activityNode.getProperty(ActivityConstants.PARAM_SOURCE);
+              if (activityNode.containsKey(ActivityConstants.PARAM_SOURCE)) {
+                String sakaiActivitySource = (String) activityNode.get(ActivityConstants.PARAM_SOURCE);
                 if (sakaiActivitySource != null ) {
                   // confirm comment path is related to the current content node.
                   if (sakaiActivitySource.startsWith(sourceNode.getPath())) {
@@ -153,17 +163,18 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
     }
   }
 
-  private void writeUsers(JSONWriter write, AuthorizableManager authorizableManager, Content activityNode) throws JSONException, StorageClientException {
+  private void writeUsers(JSONWriter write, AuthorizableManager authorizableManager,
+      Map<String, Object> activityNode) throws JSONException, StorageClientException {
     write.key("users");
     write.object();
 
     List<String> users = new ArrayList<String>();
 
     // actor
-    users.add((String) activityNode.getProperty(ActivityConstants.PARAM_ACTOR_ID));
+    users.add((String) activityNode.get(ActivityConstants.PARAM_ACTOR_ID));
 
     // audience (if present)
-    Object audienceObj = activityNode.getProperty(ActivityConstants.PARAM_AUDIENCE_ID);
+    Object audienceObj = activityNode.get(ActivityConstants.PARAM_AUDIENCE_ID);
     if (audienceObj != null) {
       if (audienceObj instanceof String[]) {
         String[] audience = (String[]) audienceObj;
@@ -200,5 +211,4 @@ public class LiteAllActivitiesResultProcessor implements SolrSearchResultProcess
 
     return searchServiceFactory.getSearchResultSet(request, query);
   }
-
 }

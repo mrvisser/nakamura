@@ -15,21 +15,17 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.activity;
+package org.sakaiproject.nakamura.activity;
 
-import java.io.Serializable;
-import java.util.Date;
+import org.sakaiproject.nakamura.api.lite.SessionAdaptable;
+
+import javax.jcr.Session;
 
 /**
- *
+ * This interface is a mockable stub that represents both a JCR Session, and something that is
+ * adaptable to a Nakamura session. This is handy for mocking the path for adapting a Sling
+ * request to a pre-determined Nakamura lite Session.
  */
-public class Activity implements Serializable {
-  private static final long serialVersionUID = -5886999531043942605L;
-  
-  private String path;
-  private String type;
-  private String message;
-  private Date created;
-  private String createdBy;
-  
+public interface MockableJcrSessionSessionAdaptable extends Session, SessionAdaptable {
+
 }

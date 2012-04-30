@@ -22,10 +22,10 @@ import static org.sakaiproject.nakamura.api.activity.ActivityConstants.ACTIVITY_
 import static org.sakaiproject.nakamura.api.activity.ActivityConstants.ACTIVITY_STORE_NAME;
 import static org.sakaiproject.nakamura.api.activity.ActivityConstants.ACTIVITY_STORE_RESOURCE_TYPE;
 import static org.sakaiproject.nakamura.api.activity.ActivityConstants.LITE_EVENT_TOPIC;
-import static org.sakaiproject.nakamura.api.activity.ActivityConstants.PARAM_ACTOR_ID;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Properties;
@@ -36,6 +36,7 @@ import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventHandler;
+import org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.activity.ActivityService;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
@@ -63,9 +64,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Map;
+
 import javax.servlet.ServletException;
 
 @Component(immediate = true, metatype = true)
@@ -86,6 +89,9 @@ public class ActivityServiceImpl implements ActivityService, EventHandler {
   @Reference
   Repository repository;
 
+  @Reference
+  ActivityDataStorageService storage;
+  
   private static SecureRandom random = null;
 
   public void postActivity(String userId, String path, Map<String, Object> attributes) {
@@ -178,22 +184,23 @@ public class ActivityServiceImpl implements ActivityService, EventHandler {
     if (!contentManager.exists(activityFeedPath)) {
       contentManager.update(new Content(activityFeedPath, null));
     }
+    
+    Map<String, Object> slingTypeProp = ImmutableMap.of(
+        JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY,
+        (Object) ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE);
+    
+    // even with jdbc storage, let's store this stub for the sake of servlet resolution
     if (!contentManager.exists(activityPath)) {
-      contentManager.update(new Content(activityPath, ImmutableMap.of(
-          JcrResourceConstants.SLING_RESOURCE_TYPE_PROPERTY,
-          (Object) ActivityConstants.ACTIVITY_SOURCE_ITEM_RESOURCE_TYPE)));
+      contentManager.update(new Content(activityPath, slingTypeProp));
     }
+    
+    activityProperties.putAll(slingTypeProp);
+    activityProperties.put(ActivityConstants.PARAM_ACTOR_ID, userId);
+    activityProperties.put(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
 
-    Content activityNode = contentManager.get(activityPath);
-    activityNode.setProperty(PARAM_ACTOR_ID, userId);
-    activityNode.setProperty(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
-    for (String key : activityProperties.keySet()) {
-      activityNode.setProperty(key, activityProperties.get(key));
-    }
-
-    //save the content
-    contentManager.update(activityNode);
-
+    Activity activity = new Activity(activityPath, new Date(), activityProperties);
+    storage.save(activity);
+    
     // post the asynchronous OSGi event
     final Dictionary<String, String> properties = new Hashtable<String, String>();
     properties.put(UserConstants.EVENT_PROP_USERID, userId);
