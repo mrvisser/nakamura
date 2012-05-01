@@ -37,7 +37,25 @@
             <Bundle-Category>sakai-nakamura</Bundle-Category>
             <Private-Package>org.sakaiproject.nakamura.activity.*</Private-Package>
             <Sling-Initial-Content>SLING-INF/content;overwriteProperties:=true;uninstall:=false</Sling-Initial-Content>
-            <Embed-Dependency>c3p0,hibernate-core,hibernate-c3p0</Embed-Dependency>
+            <DynamicImport-Package>*</DynamicImport-Package>
+            <Import-Package>
+            	!com.ibm.ejs.jts.jta,
+            	!com.ibm.ws.Transaction,
+            	!com.sun.msv.datatype,
+            	!com.sun.msv.datatype.xsd,
+            	!com.sun.jdi.*,
+            	!javax.security.jacc,
+            	!javax.validation.*,
+            	!net.sf.cglib.*,
+            	!org.apache.tools.ant.*,
+            	!org.gjt.xpp,
+            	!org.jaxen.*,
+            	!org.objectweb.asm,
+            	!org.xmlpull.v1,
+            	*
+            </Import-Package>
+            <Embed-Dependency>*;scope=runtime|compile</Embed-Dependency>
+            <Embed-Transitive>true</Embed-Transitive>
           </instructions>
         </configuration>
       </plugin>
@@ -60,14 +78,24 @@
 		<groupId>org.hibernate</groupId>
 		<artifactId>hibernate-c3p0</artifactId>
 		<version>3.5.6-Final</version>
+		<scope>runtime</scope>
 	</dependency>
   	<dependency>
   		<groupId>c3p0</groupId>
   		<artifactId>c3p0</artifactId>
   		<version>0.9.1.2</version>
-  		<scope>compile</scope>
+  		<scope>runtime</scope>
   	</dependency>
-    
+  	
+  	<!-- Need to promote from 'optional' in hibernate-core -->
+	<dependency>
+		<groupId>javassist</groupId>
+		<artifactId>javassist</artifactId>
+		<version>3.4.GA</version>
+		<scope>runtime</scope>
+	</dependency>
+	
+	    
     <dependency>
       <groupId>org.apache.sling</groupId>
       <artifactId>org.apache.sling.api</artifactId>
@@ -180,6 +208,7 @@
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jms_1.1_spec</artifactId>
       <version>1.1.1</version>
+      <scope>provided</scope>
     </dependency>
     
     <dependency>

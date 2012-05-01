@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.sakaiproject.nakamura.activity.Activity;
 import org.sakaiproject.nakamura.activity.ActivityTestHelper;
+import org.sakaiproject.nakamura.api.activity.ActivitySearchQuery;
 import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
@@ -71,8 +72,10 @@ public class ActivityDataStorageServiceTest {
     activity.setMessage("message");
     
     service.save(activity);
-    Activity readActivity = service.findAll(new String[] {"/the/path"}, null, null,
-        null, null).iterator().next();
+    
+    ActivitySearchQuery query = new ActivitySearchQuery();
+    query.paths = new String[] {"/the/path"};
+    Activity readActivity = service.findAll(query).iterator().next();
     
     Assert.assertNotNull(readActivity);
     Assert.assertNotNull(activity.getId());
@@ -107,8 +110,9 @@ public class ActivityDataStorageServiceTest {
     activity2.setMessage("message");
     service.save(activity2);
     
-    Iterator<Activity> activities = service.findAll(new String[] {"/the/path"}, null, null,
-        null, null).iterator();
+    ActivitySearchQuery query = new ActivitySearchQuery();
+    query.paths = new String[] {"/the/path"};
+    Iterator<Activity> activities = service.findAll(query).iterator();
     Activity readActivity = activities.next();
     Assert.assertEquals("type2", readActivity.getType());
     

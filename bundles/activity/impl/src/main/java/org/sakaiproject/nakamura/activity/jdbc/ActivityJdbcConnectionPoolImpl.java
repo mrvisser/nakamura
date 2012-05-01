@@ -81,7 +81,7 @@ public class ActivityJdbcConnectionPoolImpl implements ActivityJdbcConnectionPoo
         .setProperty("hibernate.connection.url", connectionString)
         .setProperty("hibernate.connection.username", username)
         .setProperty("hibernate.connection.password", password)
-        .setProperty("hibernate.hbm2ddl.auto", "create")
+        .setProperty("hibernate.hbm2ddl.auto", "update")
 
         // pooling properties
         .setProperty("hibernate.c3p0.max_size", "8")

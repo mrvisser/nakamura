@@ -17,6 +17,10 @@
  */
 package org.sakaiproject.nakamura.activity.servlets;
 
+import static org.sakaiproject.nakamura.api.search.solr.SolrSearchConstants.DEFAULT_PAGED_ITEMS;
+import static org.sakaiproject.nakamura.api.search.solr.SolrSearchConstants.PARAMS_ITEMS_PER_PAGE;
+import static org.sakaiproject.nakamura.api.search.solr.SolrSearchConstants.PARAMS_PAGE;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
@@ -31,12 +35,13 @@ import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
 import org.sakaiproject.nakamura.activity.Activity;
 import org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService;
+import org.sakaiproject.nakamura.api.activity.ActivitySearchQuery;
 import org.sakaiproject.nakamura.api.activity.ActivityUtils;
 import org.sakaiproject.nakamura.api.search.solr.Result;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchBatchResultProcessor;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchConstants;
-import org.sakaiproject.nakamura.api.search.solr.SolrSearchPropertyProvider;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultProcessor;
+import org.sakaiproject.nakamura.api.search.solr.SolrSearchUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,14 +108,23 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
     String[] groups = clean(request.getRequestParameters("group"));
     String[] activityTypes = clean(request.getRequestParameters("activityType"));
     String[] activityMessages = clean(request.getRequestParameters("activityMessage"));
+    String sortOrder = cleanSingle(request.getRequestParameter("sortOrder"));
+
+    long nitems = SolrSearchUtil.longRequestParameter(request, PARAMS_ITEMS_PER_PAGE,
+        DEFAULT_PAGED_ITEMS);
+    long page = SolrSearchUtil.longRequestParameter(request, PARAMS_PAGE, 0);
+    
+    // TODO: processors should never be looked up here. they should be found on the node.
+    // these should be removed and the unit test should be changed to provide the processors
+    // on the Node instead of on the request params.
     String processorStr = cleanSingle(request.getRequestParameter(SolrSearchConstants.SAKAI_RESULTPROCESSOR));
     String batchProcessorStr = cleanSingle(request.getRequestParameter(SolrSearchConstants.SAKAI_BATCHRESULTPROCESSOR));
-    String sortOrder = cleanSingle(request.getRequestParameter("sortOrder"));
     
     Resource resource = request.getResource();
     if (resource != null) {
       Node node = resource.adaptTo(Node.class);
       try {
+        // grab the default query string options to fall back on
         if (node.hasNode(SolrSearchConstants.SAKAI_QUERY_TEMPLATE_DEFAULTS)) {
           Node defaults = node.getNode(SolrSearchConstants.SAKAI_QUERY_TEMPLATE_DEFAULTS);
           PropertyIterator properties = defaults.getProperties();
@@ -124,6 +138,20 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
             }
           }
         }
+        
+        // get the result processor, if any
+        if (node.hasProperty(SolrSearchConstants.SAKAI_RESULTPROCESSOR)) {
+          Property processor = node.getProperty(SolrSearchConstants.SAKAI_RESULTPROCESSOR);
+          processorStr = processor.getString();
+        }
+        
+        // get the batch result processor, if any
+        if (processorStr == null && node.hasProperty(
+            SolrSearchConstants.SAKAI_BATCHRESULTPROCESSOR)) {
+          Property processor = node.getProperty(SolrSearchConstants.SAKAI_BATCHRESULTPROCESSOR);
+          batchProcessorStr = processor.getString();
+        }
+        
       } catch (RepositoryException e) {
         LOGGER.warn("Could not load default search properties.", e);
       }
@@ -167,19 +195,28 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
     
     if (processor == null && batchProcessor == null) {
       // don't continue without any processors
-      response.setStatus(SlingHttpServletResponse.SC_OK);
+      if (!response.isCommitted())
+        response.setStatus(SlingHttpServletResponse.SC_OK);
       return;
     }
     
-    List<Activity> activities = activityService.findAll(paths, activityTypes,
-        activityMessages, null, sortOrder);
+    ActivitySearchQuery query = new ActivitySearchQuery();
+    query.paths = paths;
+    query.types = activityTypes;
+    query.messages = activityMessages;
+    query.sortOrder = sortOrder;
+    query.maxResults = nitems;
+    query.offset = nitems*page;
+    
+    List<Activity> activities = activityService.findAll(query);
     Iterator<Result> results = createActivityResultIterator(activities);
     
     try {
       JSONWriter writer = new JSONWriter(response.getWriter());
+      writer.setTidy(true);
       writer.object();
-      writer.key(SolrSearchConstants.JSON_COUNT);
-      writer.value(activities.size());
+      writer.key(SolrSearchConstants.PARAMS_ITEMS_PER_PAGE);
+      writer.value(nitems);
       writer.key(SolrSearchConstants.JSON_RESULTS);
       writer.array();
       
@@ -192,12 +229,17 @@ public class ActivitySearchServlet extends SlingSafeMethodsServlet {
       }
       
       writer.endArray();
+      
+      writer.key(SolrSearchConstants.TOTAL);
+      writer.value(activities.size());
+      
       writer.endObject();
     } catch (JSONException e) {
       throw new IOException("Error writing JSON to output.", e);
     }
     
-    response.setStatus(SlingHttpServletResponse.SC_OK);
+    if (!response.isCommitted())
+      response.setStatus(SlingHttpServletResponse.SC_OK);
   }
 
   /**

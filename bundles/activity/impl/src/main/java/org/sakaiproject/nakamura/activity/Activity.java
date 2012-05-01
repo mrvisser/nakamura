@@ -17,10 +17,16 @@
  */
 package org.sakaiproject.nakamura.activity;
 
+import org.apache.commons.io.IOUtils;
 import org.hibernate.annotations.Index;
 import org.sakaiproject.nakamura.api.activity.ActivityConstants;
 import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,9 +34,7 @@ import java.util.Map;
 
 import javax.persistence.Basic;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -55,6 +59,7 @@ public class Activity implements Serializable, Cloneable {
   private String message;
   private Date occurred;
   private String actor;
+  private byte[] extraPropertiesBinary;
   private Map<String, Serializable> extraProperties;
   
   public Activity() {
@@ -194,10 +199,21 @@ public class Activity implements Serializable, Cloneable {
     this.actor = actor;
   }
 
+  @Column(name="extra_properties")
+  protected byte[] getExtraPropertiesBinary() {
+    serializeExtraProperties();
+    return extraPropertiesBinary;
+  }
+  
+  protected void setExtraPropertiesBinary(byte[] extraPropertiesBinary) {
+    this.extraPropertiesBinary = extraPropertiesBinary;
+    unserializeExtraProperties();
+  }
+  
   /**
    * @return the extraProperties
    */
-  @ElementCollection(fetch=FetchType.EAGER)
+  @Transient
   public Map<String, Serializable> getExtraProperties() {
     return extraProperties;
   }
@@ -205,6 +221,7 @@ public class Activity implements Serializable, Cloneable {
   /**
    * @param extraProperties the extraProperties to set
    */
+  @Transient
   public void setExtraProperties(Map<String, Serializable> extraProperties) {
     this.extraProperties = extraProperties;
   }
@@ -251,4 +268,37 @@ public class Activity implements Serializable, Cloneable {
     return clone;
   }
 
+  public void serializeExtraProperties() {
+    ByteArrayOutputStream baos = null;
+    ObjectOutputStream oos = null;
+    try {
+      baos = new ByteArrayOutputStream();
+      oos = new ObjectOutputStream(baos);
+      oos.writeObject(extraProperties);
+      extraPropertiesBinary = baos.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to serialize extra properties.", e);
+    } finally {
+      IOUtils.closeQuietly(baos);
+      IOUtils.closeQuietly(oos);
+    }
+  }
+  
+  @SuppressWarnings("unchecked")
+  public void unserializeExtraProperties() {
+    ByteArrayInputStream bais = null;
+    ObjectInputStream ois = null;
+    try {
+      bais = new ByteArrayInputStream(extraPropertiesBinary);
+      ois = new ObjectInputStream(bais);
+      extraProperties = (Map<String, Serializable>)ois.readObject();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to serialize extra properties.", e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Failed to serialize extra properties.", e);
+    } finally {
+      IOUtils.closeQuietly(bais);
+      IOUtils.closeQuietly(ois);
+    }
+  }
 }

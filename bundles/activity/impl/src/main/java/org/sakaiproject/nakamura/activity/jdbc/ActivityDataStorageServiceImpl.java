@@ -22,13 +22,14 @@ import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.sakaiproject.nakamura.activity.Activity;
+import org.sakaiproject.nakamura.api.activity.ActivitySearchQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,8 +40,6 @@ import java.util.List;
 public class ActivityDataStorageServiceImpl implements ActivityDataStorageService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ActivityDataStorageServiceImpl.class);
-  
-  private static final String SORT_ASC = "asc";
   
   @Reference
   protected ActivityJdbcConnectionPool pool;
@@ -60,14 +59,17 @@ public class ActivityDataStorageServiceImpl implements ActivityDataStorageServic
    */
   @Override
   public void save(Activity activity) {
-    Session s = null;
+    Session s = pool.getSession();
+    Transaction t = null;
     try {
-      s = pool.getSession();
-      s.beginTransaction();
+      t = s.beginTransaction();
       s.save(activity);
-      s.getTransaction().commit();
+      t.commit();
+    } catch (RuntimeException e) {
+      if (t != null)
+        t.rollback();
+      throw e;
     } finally {
-      s.flush();
       closeSilent(s);
     }
   }
@@ -89,6 +91,7 @@ public class ActivityDataStorageServiceImpl implements ActivityDataStorageServic
       Criteria criteria = s.createCriteria(Activity.class);
       criteria.add(Restrictions.eq("parentPath", path));
       criteria.add(Restrictions.eq("eid", eid));
+      criteria.setReadOnly(true);
       return (Activity) criteria.uniqueResult();
     } finally {
       closeSilent(s);
@@ -97,37 +100,47 @@ public class ActivityDataStorageServiceImpl implements ActivityDataStorageServic
 
   /**
    * {@inheritDoc}
-   * @see org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService#findAll(java.lang.String[], java.lang.String[], java.lang.String[], java.util.Date, java.lang.String)
+   * @see org.sakaiproject.nakamura.activity.jdbc.ActivityDataStorageService#findAll(org.sakaiproject.nakamura.api.activity.ActivitySearchQuery)
    */
   @Override
-  public List<Activity> findAll(String[] paths, String[] types, String[] messages,
-      Date then, String sortOrder) {
+  public List<Activity> findAll(ActivitySearchQuery query) {
     Session s = null;
     try {
       s = pool.getSession();
       
       Criteria criteria = s.createCriteria(Activity.class);
       
-      if (paths != null && paths.length > 0) {
-        criteria.add(Restrictions.in("parentPath", paths));
+      if (query.paths != null && query.paths.length > 0) {
+        criteria.add(Restrictions.in("parentPath", query.paths));
       }
       
-      if (types != null && types.length > 0) {
-        criteria.add(Restrictions.in("type", types));
+      if (query.types != null && query.types.length > 0) {
+        criteria.add(Restrictions.in("type", query.types));
       }
       
-      if (messages != null && messages.length > 0) {
-        criteria.add(Restrictions.in("message", messages));
+      if (query.messages != null && query.messages.length > 0) {
+        criteria.add(Restrictions.in("message", query.messages));
       }
       
-      if (then != null) {
-        criteria.add(Restrictions.ge("occurred", then));
+      if (query.then != null) {
+        criteria.add(Restrictions.ge("occurred", query.then));
       }
       
-      if (SORT_ASC.equals(sortOrder)) {
-        criteria.addOrder(Order.asc("occurred"));
+      String sortBy = "occurred";
+      if (query.sortBy != null) {
+        sortBy = query.sortBy;
+      }
+      
+      if (ActivitySearchQuery.ORDER_ASC.equals(query.sortOrder)) {
+        criteria.addOrder(Order.asc(sortBy));
       } else {
-        criteria.addOrder(Order.desc("occurred"));
+        criteria.addOrder(Order.desc(sortBy));
+      }
+      
+      // if all the results are wanted, don't set the max results, or bother with paging.
+      if (query.maxResults > 0) {
+        criteria.setMaxResults((int)query.maxResults);
+        criteria.setFirstResult((int)query.offset);
       }
       
       @SuppressWarnings("unchecked")

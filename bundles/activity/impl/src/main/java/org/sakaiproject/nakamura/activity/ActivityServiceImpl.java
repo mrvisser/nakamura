@@ -66,6 +66,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
@@ -194,6 +195,8 @@ public class ActivityServiceImpl implements ActivityService, EventHandler {
       contentManager.update(new Content(activityPath, slingTypeProp));
     }
     
+    // ensure we can update the activity properties
+    activityProperties = new HashMap<String, Object>(activityProperties);
     activityProperties.putAll(slingTypeProp);
     activityProperties.put(ActivityConstants.PARAM_ACTOR_ID, userId);
     activityProperties.put(ActivityConstants.PARAM_SOURCE, targetLocation.getPath());
