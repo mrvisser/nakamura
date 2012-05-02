@@ -47,7 +47,8 @@ import javax.persistence.Transient;
 @Entity
 @Table(name="activity_activity")
 @org.hibernate.annotations.Table(appliesTo="activity_activity", indexes = {
-      @Index(name="idx_activity_path", columnNames={"parent_path", "occurred"})
+      @Index(name="idx_activity_unique", columnNames={"parent_path", "eid"}),
+      @Index(name="idx_activity1", columnNames={"parent_path", "type", "message"})
   })
 public class Activity implements Serializable, Cloneable {
   private static final long serialVersionUID = -5886999531043942605L;
