@@ -17,9 +17,13 @@
  */
 package org.sakaiproject.nakamura.files.servlets;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
@@ -126,7 +130,14 @@ public class MyManagedContentServlet extends SlingSafeMethodsServlet {
 
   private Collection<? extends Content> findManagedContent(ContentManager cm, String id, int maxItems) throws StorageClientException, AccessDeniedException {
     List<Content> contentSearchResults = Lists.newArrayList();
-    for (Content searchResult : cm.find(ImmutableMap.of("sling:resourceType", (Object)"sakai/pooled-content", "sakai:pooled-content-manager", id))) {
+    
+    BooleanQuery query = new BooleanQuery();
+    query.add(new BooleanClause(new TermQuery(new Term("resourceType",
+        "sakai/pooled-content")), Occur.MUST));
+    query.add(new BooleanClause(new TermQuery(new Term("pooledContentManager", id)),
+        Occur.MUST));
+    
+    for (Content searchResult : cm.find(query, null)) {
       if (contentSearchResults.size() < maxItems) {
         contentSearchResults.add(searchResult);
       } else {

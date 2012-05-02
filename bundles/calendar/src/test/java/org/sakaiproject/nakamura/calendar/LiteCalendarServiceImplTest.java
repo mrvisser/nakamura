@@ -68,7 +68,7 @@ public class LiteCalendarServiceImplTest {
 
   @Before
   public void setUp() throws ClientPoolException, StorageClientException, AccessDeniedException, ClassNotFoundException, IOException {
-    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
+    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository(false);
     repository = baseMemoryRepository.getRepository();
     session = repository.loginAdministrative();
     testKey = "test-" + java.util.Calendar.getInstance().getTimeInMillis();

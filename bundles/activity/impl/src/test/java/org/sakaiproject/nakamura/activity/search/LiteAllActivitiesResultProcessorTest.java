@@ -90,7 +90,7 @@ public class LiteAllActivitiesResultProcessorTest {
     jcrSession = mock(javax.jcr.Session.class, Mockito.withSettings().extraInterfaces(SessionAdaptable.class));
     stringWriter = new StringWriter();
 
-    repository = new BaseMemoryRepository().getRepository();
+    repository = new BaseMemoryRepository(false).getRepository();
 
     contentManager = repository.loginAdministrative().getContentManager();
 

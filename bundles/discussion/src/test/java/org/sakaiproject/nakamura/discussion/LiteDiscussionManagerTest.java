@@ -21,10 +21,13 @@ import static org.apache.sling.jcr.resource.JcrResourceConstants.SLING_RESOURCE_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.isA;
+import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.Sort;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,11 +38,6 @@ import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.message.MessageConstants;
-
-import java.io.IOException;
-import java.util.Map;
-
-import javax.jcr.RepositoryException;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LiteDiscussionManagerTest {
@@ -55,18 +53,6 @@ public class LiteDiscussionManagerTest {
     when(session.getContentManager()).thenReturn(cm);
   }
 
-  /**
-   * Login as administrator
-   *
-   * @return Returns the administrator session.
-   * @throws RepositoryException
-   * @throws IOException
-   */
-//  private Session loginAsAdmin() throws LoginException, RepositoryException, IOException {
-//    return getRepository().login(new SimpleCredentials("admin", "admin".toCharArray()));
-//  }
-
-  @SuppressWarnings("unchecked")
   @Test
   public void testFindSettings() throws Exception {
     // Add a couple of nodes
@@ -74,7 +60,7 @@ public class LiteDiscussionManagerTest {
     settingsNode.setProperty(SLING_RESOURCE_TYPE_PROPERTY, "sakai/settings");
     settingsNode.setProperty("sakai:marker", "foo");
     settingsNode.setProperty("sakai:type", "discussion");
-    when(cm.find(isA(Map.class))).thenReturn(ImmutableList.of(settingsNode));
+    when(cm.find(isA(Query.class), (Sort)isNull())).thenReturn(ImmutableList.of(settingsNode));
 
     LiteDiscussionManager manager = new LiteDiscussionManagerImpl();
     Content result = manager.findSettings("foo", session, "discussion");
@@ -83,7 +69,6 @@ public class LiteDiscussionManagerTest {
     assertEquals("/settingsNode", result.getPath());
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void testFindMessage() throws Exception {
     // Add a couple of nodes
@@ -102,7 +87,7 @@ public class LiteDiscussionManagerTest {
     Content randomNode = new Content("/messages/foo", null);
     randomNode.setProperty("foo", "bar");
 
-    when(cm.find(isA(Map.class))).thenReturn(ImmutableList.of(msgNode));
+    when(cm.find(isA(Query.class), (Sort)isNull())).thenReturn(ImmutableList.of(msgNode));
     LiteDiscussionManager manager = new LiteDiscussionManagerImpl();
     Content result = manager.findMessage("10", "foo", session, "/messages");
 

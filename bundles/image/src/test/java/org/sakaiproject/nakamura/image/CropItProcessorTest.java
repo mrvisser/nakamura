@@ -69,7 +69,7 @@ public class CropItProcessorTest {
 
   @Before
   public void setUp() throws Exception {
-    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
+    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository(false);
     Repository repository = baseMemoryRepository.getRepository();
     session = repository.loginAdministrative();
     session.getContentManager().update(new Content(img, null));

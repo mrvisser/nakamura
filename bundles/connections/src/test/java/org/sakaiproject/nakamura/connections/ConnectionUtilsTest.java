@@ -38,7 +38,7 @@ public class ConnectionUtilsTest  {
   
   @Before
   public void setUp() throws Exception {
-    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
+    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository(false);
     repository = baseMemoryRepository.getRepository();
     Session session = repository.loginAdministrative();
     AuthorizableManager authorizableManager = session.getAuthorizableManager();

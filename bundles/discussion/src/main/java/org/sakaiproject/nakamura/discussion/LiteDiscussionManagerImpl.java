@@ -22,6 +22,10 @@ import com.google.common.collect.Maps;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Property;
 import org.apache.felix.scr.annotations.Service;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.TermQuery;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.sakaiproject.nakamura.api.discussion.LiteDiscussionManager;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -75,17 +79,19 @@ public class LiteDiscussionManagerImpl implements LiteDiscussionManager {
     }
     try {
       ContentManager cm = session.getContentManager();
-      Map<String, Object> props = Maps.newHashMap();
-      props.put("sling:resourceType", "sakai/message");
-      props.put("sakai:type", "discussion");
-      props.put("sakai:id", messageId);
-      props.put("sakai:marker", marker);
 
       path = expandHomeDirectory(path);
       if (path.startsWith("/p/")) {
         path = path.substring("/p/".length());
       }
-      Iterator<Content> foundContent = cm.find(props).iterator();
+      
+      BooleanQuery query = new BooleanQuery();
+      query.add(new TermQuery(new Term("resourceType", "sakai/message")), Occur.MUST);
+      query.add(new TermQuery(new Term("type", "discussion")), Occur.MUST);
+      query.add(new TermQuery(new Term("messageId", messageId)), Occur.MUST);
+      query.add(new TermQuery(new Term("marker", marker)), Occur.MUST);
+      
+      Iterator<Content> foundContent = cm.find(query, null).iterator();
 
       while (foundContent.hasNext()) {
         Content c = foundContent.next();
@@ -121,7 +127,12 @@ public class LiteDiscussionManagerImpl implements LiteDiscussionManager {
       props.put("sakai:type", type);
       props.put("sakai:marker", marker);
 
-      Iterator<Content> foundContent = cm.find(props).iterator();
+      BooleanQuery query = new BooleanQuery();
+      query.add(new TermQuery(new Term("resourceType", "sakai/settings")), Occur.MUST);
+      query.add(new TermQuery(new Term("type", type)), Occur.MUST);
+      query.add(new TermQuery(new Term("marker", marker)), Occur.MUST);
+      
+      Iterator<Content> foundContent = cm.find(query, null).iterator();
 
       if (foundContent.hasNext()) {
         Content c = foundContent.next();

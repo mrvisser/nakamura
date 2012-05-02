@@ -57,7 +57,7 @@ public class ConnectionManagerImplTest {
 
   @Before
   public void setUp() throws ClientPoolException, StorageClientException, AccessDeniedException, ClassNotFoundException, IOException {
-    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
+    BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository(false);
     repository = baseMemoryRepository.getRepository();
     connectionManager = new ConnectionManagerImpl();
     connectionManager.repository = repository;
