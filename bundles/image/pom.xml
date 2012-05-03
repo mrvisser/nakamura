@@ -109,6 +109,14 @@
 	  <artifactId>org.sakaiproject.nakamura.core</artifactId>
 	</dependency>
 	<dependency>
+	  <groupId>commons-lang</groupId>
+	  <artifactId>commons-lang</artifactId>
+	</dependency>
+	<dependency>
+	  <groupId>commons-codec</groupId>
+	  <artifactId>commons-codec</artifactId>
+	</dependency>
+	<dependency>
 		<groupId>org.sakaiproject.nakamura</groupId>
 		<artifactId>org.sakaiproject.nakamura.testutils</artifactId>
 		<version>1.3-SNAPSHOT</version>

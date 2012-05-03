@@ -89,6 +89,10 @@
       <version>1.3-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
     
     <!-- Testing -->
     <dependency>
