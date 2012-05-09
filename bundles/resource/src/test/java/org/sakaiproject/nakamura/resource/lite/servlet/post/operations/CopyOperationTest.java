@@ -282,7 +282,6 @@ public class CopyOperationTest {
     Assert.assertNotNull(page);
     Assert.assertNotNull(editor);
     Assert.assertNotNull(counts);
-        
   }
 
   private String readToString(InputStream is) {
