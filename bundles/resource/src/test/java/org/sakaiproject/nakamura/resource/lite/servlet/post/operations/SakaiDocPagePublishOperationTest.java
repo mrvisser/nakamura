@@ -137,9 +137,8 @@ public class SakaiDocPagePublishOperationTest {
     // touch the draft message property
     Thread.sleep(5);
     Content draftMessage = cm.get(from+"/widget/message");
-    Map<String, Object> props = new HashMap<String, Object>(draftMessage.getProperties());
-    props.put("message", "DraftContent1");
-    cm.update(new Content(draftMessage.getPath(), props));
+    draftMessage.setProperty("message", "DraftContent1");
+    cm.update(draftMessage);
     
     SakaiDocPagePublishOperation op = createOperation();
     mockRequest(request, to, adminSession);
@@ -160,8 +159,7 @@ public class SakaiDocPagePublishOperationTest {
     Assert.assertEquals("DraftPage", page.getProperty("page"));
     Assert.assertEquals("DraftWidget", widget.getProperty("widget"));
     
-    // though the draft message has different content, it should not clobber since it was not
-    // updated
+    // The draft message should have overwritten the live because it was updated
     Assert.assertEquals("DraftContent1", message.getProperty("message"));
     
   }

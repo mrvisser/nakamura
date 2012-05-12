@@ -362,20 +362,23 @@ public class CreateContentPoolServlet extends SlingAllMethodsServlet {
     if ( create ) {
       // Create a proper nt:file node in jcr with some properties on it to make it possible
       // to locate this pool file without having to use the path.
-      Map<String, Object> contentProperties = new HashMap<String, Object>();
-      contentProperties.put(POOLED_CONTENT_FILENAME, FilenameUtils.getName(value.getFileName()));
-      contentProperties.put(SLING_RESOURCE_TYPE_PROPERTY, POOLED_CONTENT_RT);
-      contentProperties.put(POOLED_CONTENT_CREATED_FOR, au.getId());
-      contentProperties.put(POOLED_NEEDS_PROCESSING, "true");
-      contentProperties.put(Content.MIMETYPE_FIELD, contentType);
-      contentProperties.put(POOLED_CONTENT_USER_MANAGER, new String[]{au.getId()});
       
-      Content content = new Content(poolId,contentProperties);
+      Content content = null;
       
+      if (contentManager.exists(poolId)) {
+        content = contentManager.get(poolId);
+      } else {
+        content = new Content(poolId, new HashMap<String, Object>());
+      }
+      
+      content.setProperty(POOLED_CONTENT_FILENAME, FilenameUtils.getName(value.getFileName()));
+      content.setProperty(SLING_RESOURCE_TYPE_PROPERTY, POOLED_CONTENT_RT);
+      content.setProperty(POOLED_CONTENT_CREATED_FOR, au.getId());
+      content.setProperty(POOLED_NEEDS_PROCESSING, "true");
+      content.setProperty(Content.MIMETYPE_FIELD, contentType);
+      content.setProperty(POOLED_CONTENT_USER_MANAGER, new String[]{au.getId()});
       contentManager.update(content);
-      
       contentManager.writeBody(poolId, value.getInputStream());
-      
       
       // deny anon everything
       // deny everyone everything

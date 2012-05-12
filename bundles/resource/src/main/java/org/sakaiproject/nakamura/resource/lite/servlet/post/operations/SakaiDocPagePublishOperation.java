@@ -145,23 +145,25 @@ public class SakaiDocPagePublishOperation extends MoveOperation {
     for (Map.Entry<String, Content> entry : messageStore.entrySet()) {
       Content targetMessage = contentManager.get(entry.getKey());
       if (targetMessage != null) {
-        // replace and clobber the message properties with that in the back-up ("source")
-        Map<String, Object> newProps = new HashMap<String, Object>(entry.getValue().getProperties());
+        Content source = entry.getValue();
         // remove properties that don't exist in the source
         for (Map.Entry<String, Object> targetPropEntry : targetMessage.getProperties().entrySet()) {
           String targetKey = targetPropEntry.getKey();
-          if (!newProps.containsKey(targetKey)) {
+          if (!source.hasProperty(targetKey)) {
             // if it does not exist in the source, deleted it
-            newProps.put(targetKey, new RemoveProperty());
+            targetMessage.setProperty(targetKey, new RemoveProperty());
           }
         }
         
-        targetMessage = new Content(targetMessage.getPath(), newProps);
+        // update the properties in the target with those in the source
+        for (String sourceKey : source.getProperties().keySet()) {
+          targetMessage.setProperty(sourceKey, source.getProperty(sourceKey));
+        }
         
       } else {
         // the target message does not exist, we need to recreate it. this happens when the message
         // was created WHILE the page was being edited.
-        targetMessage = entry.getValue();
+        targetMessage = new Content(entry.getValue().getPath(), entry.getValue().getProperties());
       }
       
       contentManager.update(targetMessage);
