@@ -85,7 +85,7 @@ public class LitePersonalTrackingStore implements PersonalTrackingStore {
       activityNode.setProperty("resourceId", resourceId);
       activityNode.setProperty("resourcetype", resourceType);
       activityNode.setProperty("activitytype", activityType);
-      activityNode.setProperty("timestamp", timestamp);
+      activityNode.setProperty("timestamp", timestamp.getTimeInMillis());
       activityNode.setProperty("userid", userId);
       cm.update(activityNode);
       cm.update(trackingNode);

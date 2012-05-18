@@ -33,6 +33,7 @@ import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
+import org.sakaiproject.nakamura.api.lite.StorageClientUtils;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Handler for messages that are sent locally and intended for local delivery. Needs to be
@@ -181,9 +183,19 @@ public class LiteInternalMessageHandler implements LiteMessageTransport,
             
             ImmutableMap.Builder<String, Object> propertyBuilder = ImmutableMap.builder();
             // Copy the content into the user his folder.
-            contentManager.update(
-                new Content(toPath.substring(0, toPath.lastIndexOf("/")), propertyBuilder
-                    .build()));
+            
+            String copyToPath = StorageClientUtils.getParentObjectPath(toPath);
+            Content copyTo = contentManager.get(copyToPath);
+            if (copyTo == null) {
+              copyTo = new Content(copyToPath, propertyBuilder.build());
+            }
+            
+            Map<String, Object> properties = propertyBuilder.build();
+            for (String key : properties.keySet()) {
+              copyTo.setProperty(key, properties.get(key));
+            }
+            
+            contentManager.update(copyTo);
             contentManager.copy(originalMessage.getPath(), toPath, true);
             Content message = contentManager.get(toPath);
             LOG.debug("Message As delivered at {} from {} is {} ",new Object[]{message.getPath(), originalMessage.getPath(), message});

@@ -133,8 +133,7 @@ public class LiteMessagingServiceImpl implements LiteMessagingService {
     }
     // Add the id for this message.
     msg.setProperty(MessageConstants.PROP_SAKAI_ID, messageId);
-    Calendar cal = Calendar.getInstance();
-    msg.setProperty(MessageConstants.PROP_SAKAI_CREATED, cal);
+    msg.setProperty(MessageConstants.PROP_SAKAI_CREATED, System.currentTimeMillis());
     msg.setProperty("sling:resourceSuperType", "sparse/Content");
     msg.setProperty(MessageConstants.PROP_SAKAI_MESSAGE_STORE, messagePathBase);
 
