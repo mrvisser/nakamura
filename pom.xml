@@ -58,7 +58,6 @@
       <modules>
         <module>libraries/testutils</module>
         <module>libraries/utils</module>
-        <module>bundles/lucene-core</module>
         <module>bundles/formauth</module>
         <module>bundles/trustedauth</module>
         <module>bundles/securityloader</module>
@@ -115,6 +114,8 @@
         <module>bundles/lom</module>
         <module>bundles/content-packaging</module>
         <module>bundles/postgresqlwrapper</module>
+        <module>contrib/storage/api</module>
+        <module>contrib/storage/infinispan</module>
         <module>testscripts</module>
       </modules>
     </profile>
@@ -1295,7 +1296,7 @@
       <dependency>
         <groupId>org.sakaiproject.nakamura</groupId>
         <artifactId>org.sakaiproject.nakamura.solr</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5-SNAPSHOT-infinispan</version>
         <scope>provided</scope>
       </dependency>
     </dependencies>

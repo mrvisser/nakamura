@@ -390,6 +390,16 @@ KERN-1187
       <version>1.3.5-SNAPSHOT</version>
     </bundle>
     <bundle>
+    	<groupId>org.sakaiproject.nakamura</groupId>
+    	<artifactId>org.sakaiproject.nakamura.storage.api</artifactId>
+    	<version>1.4.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
+    	<groupId>org.sakaiproject.nakamura</groupId>
+    	<artifactId>org.sakaiproject.nakamura.storage.infinispan</artifactId>
+    	<version>1.4.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
       <groupId>com.googlecode.guava-osgi</groupId>
       <artifactId>guava-osgi</artifactId>
       <version>10.0.0</version>
@@ -525,7 +535,7 @@ KERN-1187
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.solr</artifactId>
-      <version>1.5-SNAPSHOT</version>
+      <version>1.5-SNAPSHOT-infinispan</version>
     </bundle>
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>

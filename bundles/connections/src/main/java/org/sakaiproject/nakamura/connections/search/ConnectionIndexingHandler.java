@@ -84,6 +84,17 @@ public class ConnectionIndexingHandler implements IndexingHandler, QoSIndexHandl
   @Reference
   protected SolrServerService solrServerService;
   
+  public ConnectionIndexingHandler() {
+    
+  }
+  
+  public ConnectionIndexingHandler(ConnectionStorage connectionStorage, TopicIndexer topicIndexer,
+      SolrServerService solrServerService) {
+    this.connectionStorage = connectionStorage;
+    this.topicIndexer = topicIndexer;
+    this.solrServerService = solrServerService;
+  }
+  
   @Activate
   public void activate(Map<String, Object> properties) throws Exception {
     topicIndexer.addHandler(StorageEventUtil.TOPIC_REFRESH_DEFAULT, this);
