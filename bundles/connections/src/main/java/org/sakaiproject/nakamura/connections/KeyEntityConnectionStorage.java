@@ -18,6 +18,7 @@ package org.sakaiproject.nakamura.connections;
  */
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -49,10 +50,15 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
+import org.sakaiproject.nakamura.api.storage.CloseableIterator;
+import org.sakaiproject.nakamura.api.storage.DomainProvider;
+import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,8 +69,11 @@ import java.util.Set;
  */
 @Service
 @Component
-public class KeyEntityConnectionStorage implements ConnectionStorage {
+public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProvider {
 
+  private final static Set<Class<? extends Entity>> DOMAIN = ImmutableSet.
+      <Class<? extends Entity>>of(ContactConnection.class);
+  
   @Reference
   protected Repository repository;
 
@@ -184,9 +193,13 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
     query.add(new BooleanClause(simpleTermQuery("connectionState", state.toString()), Occur.MUST));
     query.add(new BooleanClause(simpleTermQuery("fromUserId", userId), Occur.MUST));
     
-    List<ContactConnection> connections = dao.findAll(query);
-    for (ContactConnection connection : connections) {
-      usernames.add(connection.getToUserId());
+    CloseableIterator<ContactConnection> connections = dao.findAll(query);
+    try {
+      while (connections.hasNext()) {
+        usernames.add(connections.next().getToUserId());
+      }
+    } finally {
+      close(connections);
     }
     return usernames;
   }
@@ -216,5 +229,19 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
   
   private EntityDao<ContactConnection> createDao() {
     return storage.getDao(ContactConnection.class);
+  }
+
+  @Override
+  public Set<Class<? extends Entity>> getDomainClasses() {
+    return DOMAIN;
+  }
+
+  private void close(Closeable c) {
+    if (c != null) {
+      try {
+        c.close();
+      } catch (IOException e) {
+      }
+    }
   }
 }

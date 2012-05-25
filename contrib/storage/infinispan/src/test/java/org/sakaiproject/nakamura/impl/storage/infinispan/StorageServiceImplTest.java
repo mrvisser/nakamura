@@ -19,9 +19,11 @@ package org.sakaiproject.nakamura.impl.storage.infinispan;
 
 import junit.framework.Assert;
 
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.junit.Test;
 import org.sakaiproject.nakamura.api.storage.CloseableIterator;
 import org.sakaiproject.nakamura.api.storage.Entity;
+import org.sakaiproject.nakamura.api.storage.StorageService;
 
 /**
  *
@@ -30,9 +32,10 @@ public class StorageServiceImplTest {
 
   @Test
   public void testFindAll() {
-    StorageServiceImpl service = new StorageServiceImpl();
+    StorageService service = new InMemoryStorageServiceImpl();
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
-    CloseableIterator<Entity> allEntities = service.findAll();
+    CloseableIterator<GenericEntity> allEntities = service.getDao(GenericEntity.class)
+        .findAll(new MatchAllDocsQuery());
     Entity found = allEntities.next();
     
     Assert.assertFalse(allEntities.hasNext());

@@ -27,12 +27,16 @@ import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.sakaiproject.nakamura.api.storage.Entity;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
 @Indexed @ProvidedId
 @Analyzer(impl=KeywordAnalyzer.class)
-public class ContactConnection implements Entity {
+public class ContactConnection implements Entity, Serializable {
+  
+  private static final long serialVersionUID = 1L;
+  
   private String key = null;
   private ConnectionState connectionState = ConnectionState.NONE;
   private Set<String> connectionTypes = Sets.newHashSet();

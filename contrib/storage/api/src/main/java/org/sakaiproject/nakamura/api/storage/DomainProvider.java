@@ -17,18 +17,17 @@
  */
 package org.sakaiproject.nakamura.api.storage;
 
+import java.util.Set;
+
 /**
- *
+ * An interface that represents a provider of a domain. A domain is a collection of
+ * entity classes.
  */
-public interface StorageService {
+public interface DomainProvider {
 
   /**
-   * Get a data-access object responsible for the persistence operations of entities
-   * of the given {@code clazz} type. 
-   * 
-   * @param clazz
-   * @return
+   * @return the collection of classes that represents this domain.
    */
-  <T extends Entity> EntityDao<T> getDao(Class<T> clazz);
-
+  Set<Class<? extends Entity>> getDomainClasses();
+  
 }

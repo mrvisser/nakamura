@@ -34,7 +34,7 @@ public class EntityDaoTest {
   
   @Before
   public void setup() {
-    service = new StorageServiceImpl();
+    service = new InMemoryStorageServiceImpl();
     dao = service.getDao(GenericEntity.class);
   }
   

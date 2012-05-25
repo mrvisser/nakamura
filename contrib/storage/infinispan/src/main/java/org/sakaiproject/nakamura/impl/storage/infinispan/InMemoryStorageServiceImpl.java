@@ -17,64 +17,46 @@
  */
 package org.sakaiproject.nakamura.impl.storage.infinispan;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.query.CacheQuery;
-import org.infinispan.query.Search;
-import org.sakaiproject.nakamura.api.storage.CloseableIterator;
 import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
 
-import java.util.Map;
-
 /**
- *
+ * A configuration wrapper to bootstrap a storage service implementation that is
+ * entire in-memory.
  */
-@Service
-@Component
-public class StorageServiceImpl implements StorageService {
+public class InMemoryStorageServiceImpl implements StorageService {
+
+  private StorageService storageService;
   
-  private Cache<String, Entity> entityCache;
-  
-  public StorageServiceImpl() {
-    activate(null);
-  }
-  
-  @Activate
-  public void activate(Map<String, Object> properties) {
-    // TODO: allow for a real configuration approach
+  public InMemoryStorageServiceImpl() {
     GlobalConfigurationBuilder globalCfg = new GlobalConfigurationBuilder();
     globalCfg.classLoader(getClass().getClassLoader());
     
     DefaultCacheManager container = new DefaultCacheManager(globalCfg.build(), true);
     ConfigurationBuilder cfg = new ConfigurationBuilder();
     cfg.classLoader(getClass().getClassLoader());
-    cfg.indexing().enable().indexLocalOnly(true);
+    
+    // ensure all indexing happens in memory by using the ram directory provider
+    cfg.indexing().enable().indexLocalOnly(true).addProperty(
+        InfinispanStorageServiceImpl.ISPN_INDEX_PROP_DIRECTORY_PROVIDER,
+        InfinispanStorageServiceImpl.ISPN_INDEX_DIRECTORY_PROVIDER_RAM);
+    
     container.defineConfiguration("EntityCache", cfg.build());
     
-    entityCache = container.getCache("EntityCache");
+    storageService = new InfinispanStorageServiceImpl(container, "EntityCache");
   }
   
   /**
    * {@inheritDoc}
    * @see org.sakaiproject.nakamura.api.storage.StorageService#getDao(java.lang.Class)
    */
-  @SuppressWarnings("unchecked")
   @Override
   public <T extends Entity> EntityDao<T> getDao(Class<T> clazz) {
-    return new GenericEntityDao<T>((Cache<String, T>) entityCache, clazz);
+    return storageService.getDao(clazz);
   }
 
-  @Override
-  public CloseableIterator<Entity> findAll() {
-    CacheQuery query = Search.getSearchManager(entityCache).getQuery(new MatchAllDocsQuery());
-    return new PreemptiveCloseableIterator(query.lazyIterator());
-  }
 }

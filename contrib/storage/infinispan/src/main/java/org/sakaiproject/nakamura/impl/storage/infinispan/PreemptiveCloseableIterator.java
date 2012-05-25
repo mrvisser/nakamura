@@ -19,7 +19,6 @@ package org.sakaiproject.nakamura.impl.storage.infinispan;
 
 import org.infinispan.query.QueryIterator;
 import org.sakaiproject.nakamura.api.storage.CloseableIterator;
-import org.sakaiproject.nakamura.api.storage.Entity;
 
 import java.io.IOException;
 
@@ -28,11 +27,15 @@ import java.io.IOException;
  * simple look-ahead approache to ensuring nulls don't creep out of the search results.
  * 
  * TODO: why do nulls creep out of the search results?
+ * 
+ * Answer: probably because I wiped out the cache contents but did not delete the indexes.
+ * This can be changed to a very simple impl, but I don't think it's worth the trouble
+ * since, hey, lets not return nulls.
  */
-public class PreemptiveCloseableIterator implements CloseableIterator<Entity> {
+public class PreemptiveCloseableIterator<T> implements CloseableIterator<T> {
 
   private QueryIterator i;
-  private Entity next;
+  private T next;
 
   public PreemptiveCloseableIterator(QueryIterator i) {
     this.i = i;
@@ -45,8 +48,8 @@ public class PreemptiveCloseableIterator implements CloseableIterator<Entity> {
   }
 
   @Override
-  public Entity next() {
-    Entity next = this.next;
+  public T next() {
+    T next = this.next;
     fetchNext();
     return next;
   }
@@ -61,10 +64,11 @@ public class PreemptiveCloseableIterator implements CloseableIterator<Entity> {
     i.close();
   }
   
+  @SuppressWarnings("unchecked")
   private void fetchNext() {
     this.next = null;
     while (i.hasNext()) {
-      this.next = (Entity) i.next();
+      this.next = (T) i.next();
       if (this.next != null)
         break;
     }

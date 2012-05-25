@@ -19,8 +19,6 @@ package org.sakaiproject.nakamura.api.storage;
 
 import org.apache.lucene.search.Query;
 
-import java.util.List;
-
 /**
  *
  */
@@ -48,6 +46,6 @@ public interface EntityDao<T extends Entity> {
    * @param query
    * @return
    */
-  List<T> findAll(Query query);
+  CloseableIterator<T> findAll(Query query);
   
 }

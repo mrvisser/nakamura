@@ -42,14 +42,25 @@ public class StorageEventUtil {
   
   public static final String TOPIC_BASE = "org/sakaiproject/nakamura/api/storage/";
   public static final String TOPIC_REFRESH = "REFRESH";
+  public static final String TOPIC_REFRESH_ALL = "REFRESH_ALL";
   public static final String TOPIC_REFRESH_DEFAULT = TOPIC_BASE + TOPIC_REFRESH;
+  public static final String TOPIC_REFRESH_ALL_DEFAULT = TOPIC_BASE + TOPIC_REFRESH_ALL;
   
   // the unique identifier of an event is loosely considered to be 'path', and QueueManager will not act on one if this property does not exist.
   public static final String FIELD_KEY = "path";
   public static final String FIELD_ENTITY_CLASS = "org/sakaiproject/nakamura/api/storage/StorageEventManager/FIELD_ENTITY_CLASS";
   public static final String FIELD_ENTITY_BEFORE = "org/sakaiproject/nakamura/api/storage/StorageEventManager/FIELD_ENTITY_BEFORE";
   public static final String FIELD_ACTOR_USER_ID = "org/sakaiproject/nakamura/api/storage/StorageEventManager/FIELD_ACTOR_USER_ID";
-  
+
+  /**
+   * Create an entity storage event based on the given criteria.
+   * 
+   * @param topic
+   * @param actorUserId
+   * @param newEntity
+   * @param oldEntity
+   * @return
+   */
   public static final Event createStorageEvent(String topic, String actorUserId, Entity newEntity, Entity oldEntity) {
     if (topic == null)
       throw new IllegalArgumentException("Cannot create event from null topic.");
@@ -69,37 +80,30 @@ public class StorageEventUtil {
     return new Event(topic, properties);
   }
   
-  public static final void refreshAllEntities(StorageService storageService,
-      EventAdmin eventAdmin, String actorUserId, boolean async) {
+  /**
+   * Trigger the event to refresh all entities. Either synchronously or asynchronously,
+   * as specified by {@code async}.
+   * 
+   * @param eventAdmin
+   * @param actorUserId
+   * @param async
+   */
+  public static final void triggerRefreshAllEntities(EventAdmin eventAdmin,
+      String actorUserId, boolean async) {
+    Map<String, Object> props = new HashMap<String, Object>();
+    props.put(FIELD_ACTOR_USER_ID, actorUserId);
+    Event event = new Event(TOPIC_REFRESH_ALL_DEFAULT, props);
     
     if (async) {
       LOGGER.info("Beginning refresh of all entities asynchronously.");
+      eventAdmin.postEvent(event);
     } else {
-      LOGGER.info("Beginning refresh of all entities synchronously.");
+      LOGGER.info("Beginning refresh of all entities synchronously...");
+      eventAdmin.sendEvent(event);
     }
     
-    long count = 0;
-    
-    CloseableIterator<Entity> entities = storageService.findAll();
-    while (entities.hasNext()) {
-      Entity entity = entities.next();
-      Event event = StorageEventUtil.createStorageEvent(StorageEventUtil.TOPIC_REFRESH_DEFAULT,
-          "admin", entity, null);
-      
-      // fire the event
-      if (async) {
-        eventAdmin.postEvent(event);
-      } else {
-        eventAdmin.sendEvent(event);
-      }
-      
-      count++;
-    }
-    
-    if (async) {
-      LOGGER.info("Finished firing {} refresh events asynchronously", count);
-    } else {
-      LOGGER.info("Finished firing {} refresh events synchronously", count);
+    if (!async) {
+      LOGGER.info("Finished firing refresh events synchronously.");
     }
   }
 }

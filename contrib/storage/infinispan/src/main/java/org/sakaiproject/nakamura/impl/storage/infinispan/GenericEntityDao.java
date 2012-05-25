@@ -22,11 +22,9 @@ import org.infinispan.Cache;
 import org.infinispan.context.Flag;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.sakaiproject.nakamura.api.storage.CloseableIterator;
 import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  *
@@ -64,17 +62,10 @@ public class GenericEntityDao<T extends Entity> implements EntityDao<T> {
    * {@inheritDoc}
    * @see org.sakaiproject.nakamura.api.storage.EntityDao#findAll(org.apache.lucene.search.Query)
    */
-  @SuppressWarnings("unchecked")
   @Override
-  public List<T> findAll(Query luceneQuery) {
-    List<T> results = new LinkedList<T>();
+  public CloseableIterator<T> findAll(Query luceneQuery) {
     CacheQuery query = Search.getSearchManager(cache).getQuery(luceneQuery, type);
-    for (Object result : query.list()) {
-      if (result != null) {
-        results.add((T) result);
-      }
-    }
-    return results;
+    return new PreemptiveCloseableIterator<T>(query.lazyIterator());
   }
 
 }
