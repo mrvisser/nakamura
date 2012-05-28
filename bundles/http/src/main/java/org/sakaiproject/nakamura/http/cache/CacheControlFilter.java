@@ -100,12 +100,21 @@ public class CacheControlFilter implements Filter {
   @Property(intValue=5)
   private static final String FILTER_PRIORITY_CONF = "filter.priority";
 
+  @Property(boolValue=false)
+  private static final String DISABLE_CACHE_FOR_UI_DEV = "disable.cache.for.dev.mode";
   
+  @Property(boolValue=true)
+  private static final String BYPASS_CACHE_FOR_LOCALHOST = "bypass.cache.for.localhost";
+
   @Reference 
   protected CacheManagerService cacheManagerService;
   
   @Reference
   protected ExtHttpService extHttpService;
+
+  private boolean disableForDevMode;
+  
+  private boolean bypassForLocalhost;
 
   /**
    * {@inheritDoc}
@@ -125,6 +134,12 @@ public class CacheControlFilter implements Filter {
       throws IOException, ServletException {
     HttpServletRequest srequest = (HttpServletRequest) request;
     HttpServletResponse sresponse = (HttpServletResponse) response;
+    if (bypassForLocalhost && ("localhost".equals(request.getServerName()) 
+                                    || "127.0.0.1".equals(request.getServerName()))) {
+      // bypass for developer convenience
+      chain.doFilter(request, response);
+      return;
+    }
     String path = srequest.getPathInfo();
     String cacheKey = srequest.getQueryString() == null ? path : path + "?" + srequest.getQueryString();
 
@@ -183,7 +198,6 @@ public class CacheControlFilter implements Filter {
           TelemetryCounter.incrementValue("http", "CacheControlFilter-nosave", cacheKey);
         }
       } else {
-        TelemetryCounter.incrementValue("http", "CacheControlFilter-noop", cacheKey);
         chain.doFilter(request, response);
       }
     }
@@ -271,8 +285,15 @@ public class CacheControlFilter implements Filter {
 
     int filterPriority = PropertiesUtil.toInteger(properties.get(FILTER_PRIORITY_CONF),0);
 
-    extHttpService.registerFilter(this, ".*", null, filterPriority, null);
+    disableForDevMode = PropertiesUtil.toBoolean(properties.get(DISABLE_CACHE_FOR_UI_DEV), false);
+    
+    bypassForLocalhost = PropertiesUtil.toBoolean(properties.get(BYPASS_CACHE_FOR_LOCALHOST), true);
 
+    if ( disableForDevMode ) {
+      extHttpService.unregisterFilter(this);
+    } else {
+      extHttpService.registerFilter(this, ".*", null, filterPriority, null);
+    }
 
   }
 
