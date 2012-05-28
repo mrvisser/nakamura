@@ -55,6 +55,7 @@ import org.sakaiproject.nakamura.api.storage.DomainProvider;
 import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
+import org.sakaiproject.nakamura.api.storage.UserTransactionUtil;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
 
 import java.io.Closeable;
@@ -62,6 +63,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 
 /**
@@ -82,6 +86,16 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
   
   @Reference
   protected EventAdmin eventAdmin;
+  
+  public KeyEntityConnectionStorage() {
+    
+  }
+  
+  public KeyEntityConnectionStorage(Repository repository, StorageService storage, EventAdmin eventAdmin) {
+    this.repository = repository;
+    this.storage = storage;
+    this.eventAdmin = eventAdmin;
+  }
   
   @Override
   public ContactConnection getOrCreateContactConnection(Authorizable fromUser, Authorizable toUser)
@@ -131,6 +145,15 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
     }
   }
 
+  /**
+   * {@inheritDoc}
+   * @see org.sakaiproject.nakamura.api.connections.ConnectionStorage#getTransactionManager()
+   */
+  @Override
+  public TransactionManager getTransactionManager() {
+    return storage.getTransactionManager();
+  }
+  
   private ContactConnection makeContactConnection(Authorizable fromUser, Authorizable toUser, Content connectionContent) {
     if (fromUser == null || toUser == null || connectionContent == null) {
       return null;
@@ -161,10 +184,21 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
       dao.update(thisNode);
       dao.update(otherNode);
       
-      Event event = ConnectionEventUtil.createUpdateConnectionEvent(oldThisNode, thisNode);
+      Event event = null;
+      if (oldThisNode == null) {
+        event = ConnectionEventUtil.createCreateConnectionEvent(thisNode); 
+      } else {
+        event = ConnectionEventUtil.createUpdateConnectionEvent(oldThisNode, thisNode);
+      }
+      
       eventAdmin.postEvent(event);
       
-      event = ConnectionEventUtil.createUpdateConnectionEvent(oldOtherNode, otherNode);
+      if (oldOtherNode == null) {
+        event = ConnectionEventUtil.createCreateConnectionEvent(otherNode);
+      } else {
+        event = ConnectionEventUtil.createUpdateConnectionEvent(oldOtherNode, otherNode);
+      }
+      
       eventAdmin.postEvent(event);
       
     } catch (Exception e) {
@@ -243,5 +277,20 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
       } catch (IOException e) {
       }
     }
+  }
+
+  @Override
+  public UserTransaction startOrJoin() {
+    return UserTransactionUtil.startOrJoin(storage);
+  }
+
+  @Override
+  public void commit(UserTransaction tx) {
+    UserTransactionUtil.commit(tx);
+  }
+
+  @Override
+  public void rollback(UserTransaction tx) {
+    UserTransactionUtil.rollbackQuiet(tx);
   }
 }

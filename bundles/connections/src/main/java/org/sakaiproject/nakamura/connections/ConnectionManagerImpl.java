@@ -73,6 +73,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.transaction.UserTransaction;
+
 
 
 
@@ -199,9 +201,11 @@ public class ConnectionManagerImpl implements ConnectionManager {
     // fail if the supplied users are invalid
     Authorizable thisAu = checkValidUserId(session, thisUserId);
     Authorizable otherAu = checkValidUserId(session, otherUserId);
-
+ 
+    UserTransaction tx = null;
     Session adminSession = null;
     try {
+      tx = connectionStorage.startOrJoin();
       adminSession = repository.loginAdministrative();
 
       // get the contact userstore nodes
@@ -255,14 +259,28 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
       connectionStorage.saveContactConnectionPair(thisNode, otherNode);
 
+      connectionStorage.commit(tx);
+      
       if (operation == ConnectionOperation.invite) {
         throw new ConnectionException(200, "Invitation made between "
             + thisNode.toString() + " and " + otherNode.toString());
       }
+    } catch (ConnectionException e) {
+      // intercept the ConnectionException here. Need to make sure it's not a success (*sigh*) before
+      // deciding if we should roll back.
+      if (e.getCode() != 200) {
+        connectionStorage.rollback(tx);
+      }
+      throw e;
     } catch (StorageClientException e) {
+      connectionStorage.rollback(tx);
       throw new ConnectionException(500, e.getMessage(), e);
     } catch (AccessDeniedException e) {
+      connectionStorage.rollback(tx);
       throw new ConnectionException(403, e.getMessage(), e);
+    } catch (RuntimeException e) {
+      connectionStorage.rollback(tx);
+      throw e;
     } finally {
       if (adminSession != null) {
         // destroy the admin session

@@ -373,6 +373,8 @@ KERN-1187
 
 <!-- Start of Sakai Bundles, add new Sakai bundles below this point at the appropriate run level  -->
    <startLevel level="1">
+   
+   	<!-- Data Services -->
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.postgresqlwrapper</artifactId>
@@ -383,7 +385,6 @@ KERN-1187
       <artifactId>org.apache.servicemix.bundles.lucene</artifactId>
       <version>3.5.0_1</version>
     </bundle>
-
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.core</artifactId>
@@ -399,6 +400,7 @@ KERN-1187
     	<artifactId>org.sakaiproject.nakamura.storage.infinispan</artifactId>
     	<version>1.4.0-SNAPSHOT</version>
     </bundle>
+    
     <bundle>
       <groupId>com.googlecode.guava-osgi</groupId>
       <artifactId>guava-osgi</artifactId>

@@ -53,6 +53,9 @@
             	!com.thoughtworks.paranamer,
             	!org.xerial.snappy,
             	!org.joda.time.*,
+            	!org.hornetq.core.*,
+            	!org.jfree.*,
+            	!com.sun.tools.jconsole,
             	org.apache.lucene.*;version="3.5",
             	*
             </Import-Package>
@@ -64,6 +67,7 @@
             	c3p0,
             	hibernate-search-engine,
 				hibernate-commons-annotations,
+				jbossjta,
             	jboss-logging,
 				jboss-marshalling,
 				jboss-marshalling-river,
@@ -110,6 +114,12 @@
 		<groupId>c3p0</groupId>
 		<artifactId>c3p0</artifactId>
 		<version>0.9.1.2</version>
+		<scope>runtime</scope>
+	</dependency>
+	<dependency>
+		<groupId>org.jboss.jbossts</groupId>
+		<artifactId>jbossjta</artifactId>
+		<version>4.16.4.Final</version>
 		<scope>runtime</scope>
 	</dependency>
   	

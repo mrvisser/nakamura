@@ -51,9 +51,9 @@ public class ConnectionEventUtil {
   public static Event createUpdateConnectionEvent(ContactConnection oldConnection,
       ContactConnection newConnection) {
     if (oldConnection == null)
-      throw new IllegalArgumentException("Cannot create CREATE event from null oldConnection.");
+      throw new IllegalArgumentException("Cannot create UPDATE event from null oldConnection. Did you mean to create a CREATE event?");
     if (newConnection == null)
-      throw new IllegalArgumentException("Cannot create CREATE event from null newConnection.");
+      throw new IllegalArgumentException("Cannot create UPDATE event from null newConnection.");
     if (!oldConnection.getKey().equals(newConnection.getKey()))
       throw new IllegalArgumentException(String.format(
           "Cannot create UPDATE event for oldConnection and newConnection with different keys: '%s' and '%s'",

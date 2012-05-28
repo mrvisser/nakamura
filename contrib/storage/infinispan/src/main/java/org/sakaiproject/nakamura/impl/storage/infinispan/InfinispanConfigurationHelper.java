@@ -18,6 +18,8 @@
 package org.sakaiproject.nakamura.impl.storage.infinispan;
 
 import org.apache.commons.lang.StringUtils;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.Parser;
 import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,23 @@ public class InfinispanConfigurationHelper {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(InfinispanConfigurationHelper.class);
 
+  public static final String CACHENAME_ENTITY_DEFAULT = "EntityCache";
+  
+  public static ConfigurationBuilderHolder parseConfiguration(ClassLoader cl, String urlStr) {
+    InputStream configStream = null;
+    
+    try {
+      configStream = InfinispanConfigurationHelper.resolveConfiguration(cl, urlStr);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load infinispan configuration.", e);
+    }
+    
+    ConfigurationBuilderHolder config = new Parser(cl).parse(configStream);
+    config.getGlobalConfigurationBuilder().classLoader(cl);
+    
+    return config;
+  }
+  
   public static InputStream resolveConfiguration(ClassLoader cl, String urlStr)
       throws IOException {
     InputStream configStream = null;

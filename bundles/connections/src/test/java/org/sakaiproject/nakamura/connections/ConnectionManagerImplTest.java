@@ -24,6 +24,8 @@ import static org.mockito.Mockito.mock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.connections.ConnectionConstants;
 import org.sakaiproject.nakamura.api.connections.ConnectionException;
 import org.sakaiproject.nakamura.api.connections.ConnectionState;
@@ -37,6 +39,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.user.UserConstants;
+import org.sakaiproject.nakamura.impl.storage.infinispan.InMemoryStorageServiceImpl;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 import org.sakaiproject.nakamura.lite.RepositoryImpl;
 import org.sakaiproject.nakamura.util.ExtendedJSONWriter;
@@ -55,15 +58,15 @@ public class ConnectionManagerImplTest {
 
   private ConnectionManagerImpl connectionManager;
   private RepositoryImpl repository;
-  private SparseMapConnectionStorage connectionStorage;
+  private KeyEntityConnectionStorage connectionStorage;
 
   @Before
   public void setUp() throws StorageClientException, AccessDeniedException, ClassNotFoundException, IOException {
     BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
     repository = baseMemoryRepository.getRepository();
     connectionManager = new ConnectionManagerImpl();
-    connectionStorage = new SparseMapConnectionStorage();
-    connectionStorage.repository = repository;
+    connectionStorage = new KeyEntityConnectionStorage(repository,
+        new InMemoryStorageServiceImpl(), Mockito.mock(EventAdmin.class));
     connectionManager.connectionStorage = connectionStorage;
   }
 
@@ -79,8 +82,8 @@ public class ConnectionManagerImplTest {
     properties.put("charlie", "c");
     Authorizable alice = session.getAuthorizableManager().findAuthorizable("alice");
     Authorizable bob = session.getAuthorizableManager().findAuthorizable("bob");
-    ContactConnection contactConnectionA = new ContactConnection(null, null, null, "alice", "bob", "Bob", "Barker", properties);
-    ContactConnection contactConnectionB = new ContactConnection(null, null, null, "bob", "alice", "Alice", "Annie", null);
+    ContactConnection contactConnectionA = new ContactConnection(ConnectionUtils.getConnectionPath(alice, bob), null, null, "alice", "bob", "Bob", "Barker", properties);
+    ContactConnection contactConnectionB = new ContactConnection(ConnectionUtils.getConnectionPath(bob, alice), null, null, "bob", "alice", "Alice", "Annie", null);
     connectionStorage.saveContactConnectionPair(contactConnectionA, contactConnectionB);
     ContactConnection connectionForAliceAndBob = connectionStorage.getContactConnection(alice, bob);
     Assert.assertArrayEquals((String[])connectionForAliceAndBob.getProperty("alfa"), new String[]{"a"});

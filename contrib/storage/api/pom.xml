@@ -56,6 +56,13 @@
   		<scope>provided</scope>
   	</dependency>
   	
+  	<dependency>
+  		<groupId>javax.transaction</groupId>
+  		<artifactId>jta</artifactId>
+  		<version>1.1</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	
 <!-- osgi -->
     <dependency>
       <groupId>org.apache.felix</groupId>

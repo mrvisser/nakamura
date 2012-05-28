@@ -19,6 +19,7 @@
 			</properties>
 		</indexing>
 
+		<!-- Cache-Loader persistence configuration -->
 		<loaders shared="false">
 			<loader
 				class="org.infinispan.loaders.jdbc.stringbased.JdbcStringBasedCacheStore"
@@ -47,7 +48,12 @@
 				</properties>
 			</loader>
 		</loaders>
+		
 		<!-- TODO: What should maxEntries be? -->
 		<eviction maxEntries="250000" strategy="LRU" />
+		
+		<!-- Transaction configuration -->
+		<transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup"
+      		transactionMode="TRANSACTIONAL" lockingMode="OPTIMISTIC" />
 	</namedCache>
 </infinispan>

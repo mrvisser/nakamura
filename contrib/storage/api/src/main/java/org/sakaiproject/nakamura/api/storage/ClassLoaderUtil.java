@@ -17,34 +17,27 @@
  */
 package org.sakaiproject.nakamura.api.storage;
 
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
-
 /**
  *
  */
-public interface StorageService {
+public class ClassLoaderUtil {
 
   /**
-   * Get a data-access object responsible for the persistence operations of entities
-   * of the given {@code clazz} type. 
+   * Perform the operations of the runnable in the context of the given
+   * {@code contextClassLoader}. When the runnable finishes running, the
+   * previous thread context will be swapped back in.
    * 
-   * @param clazz
+   * @param contextClassLoader
+   * @param runnable
    * @return
    */
-  <T extends Entity> EntityDao<T> getDao(Class<T> clazz);
-
-  /**
-   * Get the transaction manager.
-   * 
-   * @return
-   */
-  TransactionManager getTransactionManager();
-  
-  /**
-   * Get the user transaction.
-   * 
-   * @return
-   */
-  UserTransaction getUserTransaction();
+  public static void doInContext(ClassLoader contextClassLoader, Runnable runnable) {
+    ClassLoader prev = Thread.currentThread().getContextClassLoader();
+    try {
+      Thread.currentThread().setContextClassLoader(contextClassLoader);
+      runnable.run();
+    } finally {
+      Thread.currentThread().setContextClassLoader(prev);
+    }
+  }
 }

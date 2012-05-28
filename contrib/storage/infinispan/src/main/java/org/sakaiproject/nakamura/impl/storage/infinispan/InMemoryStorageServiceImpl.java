@@ -18,11 +18,16 @@
 package org.sakaiproject.nakamura.impl.storage.infinispan;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 /**
  * A configuration wrapper to bootstrap a storage service implementation that is
@@ -33,20 +38,22 @@ public class InMemoryStorageServiceImpl implements StorageService {
   private StorageService storageService;
   
   public InMemoryStorageServiceImpl() {
-    GlobalConfigurationBuilder globalCfg = new GlobalConfigurationBuilder();
-    globalCfg.classLoader(getClass().getClassLoader());
+    ConfigurationBuilderHolder cfgHolder = InfinispanConfigurationHelper.parseConfiguration(
+        getClass().getClassLoader(), null);
     
-    DefaultCacheManager container = new DefaultCacheManager(globalCfg.build(), true);
-    ConfigurationBuilder cfg = new ConfigurationBuilder();
-    cfg.classLoader(getClass().getClassLoader());
+    ConfigurationBuilder entityConfig = cfgHolder.getNamedConfigurationBuilders().get(
+        InfinispanConfigurationHelper.CACHENAME_ENTITY_DEFAULT);
     
-    // ensure all indexing happens in memory by using the ram directory provider
-    cfg.indexing().enable().indexLocalOnly(true).addProperty(
+    // store all entities in memory, do not persist to disk or evict from memory
+    entityConfig.loaders().clearCacheLoaders();
+    entityConfig.eviction().strategy(EvictionStrategy.NONE).maxEntries(-1);
+    
+    // indexes should be in-memory
+    entityConfig.indexing().addProperty(
         InfinispanStorageServiceImpl.ISPN_INDEX_PROP_DIRECTORY_PROVIDER,
         InfinispanStorageServiceImpl.ISPN_INDEX_DIRECTORY_PROVIDER_RAM);
     
-    container.defineConfiguration("EntityCache", cfg.build());
-    
+    CacheContainer container = new DefaultCacheManager(entityConfig.build(), true);
     storageService = new InfinispanStorageServiceImpl(container, "EntityCache");
   }
   
@@ -57,6 +64,16 @@ public class InMemoryStorageServiceImpl implements StorageService {
   @Override
   public <T extends Entity> EntityDao<T> getDao(Class<T> clazz) {
     return storageService.getDao(clazz);
+  }
+
+  @Override
+  public TransactionManager getTransactionManager() {
+    return storageService.getTransactionManager();
+  }
+
+  @Override
+  public UserTransaction getUserTransaction() {
+    return storageService.getUserTransaction();
   }
 
 }

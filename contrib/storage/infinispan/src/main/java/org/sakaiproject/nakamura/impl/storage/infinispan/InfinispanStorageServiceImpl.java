@@ -28,9 +28,9 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.configuration.parsing.Parser;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.TypedProperties;
 import org.osgi.service.component.ComponentException;
 import org.osgi.service.event.EventAdmin;
@@ -41,8 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.UserTransaction;
 
 /**
  *
@@ -55,7 +57,7 @@ public class InfinispanStorageServiceImpl implements StorageService {
       InfinispanStorageServiceImpl.class);
   
   @Property(description="The name of the Named Cache for entity storage",
-      value="EntityCache")
+      value=InfinispanConfigurationHelper.CACHENAME_ENTITY_DEFAULT)
   public static final String PROP_ENTITY_CACHE_NAME = "ispn_entity_cache_name";
   
   @Property(description="The file-system location of the infinispan configuration file.")
@@ -104,21 +106,9 @@ public class InfinispanStorageServiceImpl implements StorageService {
       throw new ComponentException("Entity cache name must not be empty!");
     }
     
-    ClassLoader bundleClassLoader = getClass().getClassLoader();
-    InputStream configStream = null;
-    
-    try {
-      configStream = InfinispanConfigurationHelper.resolveConfiguration(
-          bundleClassLoader, (String) properties.get(PROP_CONFIG_FILE_LOCATION));
-    } catch (IOException e) {
-      throw new ComponentException("Failed to load infinispan configuration.", e);
-    }
-    
-    ConfigurationBuilderHolder config = new Parser(bundleClassLoader).parse(configStream);
-    config.getGlobalConfigurationBuilder().classLoader(bundleClassLoader);    
-    
+    ConfigurationBuilderHolder config = InfinispanConfigurationHelper.parseConfiguration(
+        getClass().getClassLoader(), (String) properties.get(PROP_CONFIG_FILE_LOCATION));
     validateEntityCacheConfiguration(entityCacheName, config);
-    
     cacheContainer = new DefaultCacheManager(config, true);
     entityCache = cacheContainer.getCache(entityCacheName);
   }
@@ -144,7 +134,29 @@ public class InfinispanStorageServiceImpl implements StorageService {
   public <T extends Entity> EntityDao<T> getDao(Class<T> clazz) {
     return new GenericEntityDao<T>((Cache<String, T>) entityCache, clazz);
   }
+  
+  /**
+   * {@inheritDoc}
+   * @see org.sakaiproject.nakamura.api.storage.StorageService#getTransactionManager()
+   */
+  @Override
+  public TransactionManager getTransactionManager() {
+    return entityCache.getAdvancedCache().getTransactionManager();
+  }
 
+  @Override
+  public UserTransaction getUserTransaction() {
+    try {
+      JBossStandaloneJTAManagerLookup jtaLookup = (JBossStandaloneJTAManagerLookup)
+          entityCache.getCacheConfiguration().transaction().transactionManagerLookup();
+      return jtaLookup.getUserTransaction();
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  
   private void validateEntityCacheConfiguration(String entityCacheName,
       ConfigurationBuilderHolder config) {
     ConfigurationBuilder entityConfigBuilder = config.getNamedConfigurationBuilders()

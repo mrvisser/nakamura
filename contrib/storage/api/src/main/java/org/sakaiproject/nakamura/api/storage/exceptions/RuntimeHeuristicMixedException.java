@@ -15,36 +15,40 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.storage;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
+package org.sakaiproject.nakamura.api.storage.exceptions;
 
 /**
- *
+ * Runtime version of the javax.transaction.SystemException
  */
-public interface StorageService {
+public class RuntimeHeuristicMixedException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 
   /**
-   * Get a data-access object responsible for the persistence operations of entities
-   * of the given {@code clazz} type. 
    * 
-   * @param clazz
-   * @return
    */
-  <T extends Entity> EntityDao<T> getDao(Class<T> clazz);
+  public RuntimeHeuristicMixedException() {
+    super();
+  }
 
   /**
-   * Get the transaction manager.
-   * 
-   * @return
+   * @param message
+   * @param e
    */
-  TransactionManager getTransactionManager();
-  
+  public RuntimeHeuristicMixedException(String message, Throwable e) {
+    super(message, e);
+  }
+
   /**
-   * Get the user transaction.
-   * 
-   * @return
+   * @param message
    */
-  UserTransaction getUserTransaction();
+  public RuntimeHeuristicMixedException(String message) {
+    super(message);
+  }
+
+  /**
+   * @param message
+   */
+  public RuntimeHeuristicMixedException(Throwable e) {
+    super(e);
+  }
 }
