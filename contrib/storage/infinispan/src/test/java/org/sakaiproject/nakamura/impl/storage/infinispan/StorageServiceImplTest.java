@@ -29,8 +29,6 @@ import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.storage.UserTransactionUtil;
 
-import javax.transaction.UserTransaction;
-
 /**
  *
  */
@@ -48,9 +46,9 @@ public class StorageServiceImplTest {
   @Test
   public void testUserTransactionCommit() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
-    UserTransactionUtil.commit(tx);
+    UserTransactionUtil.commit(service);
     GenericEntity e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNotNull(e);
     Assert.assertEquals("prop1", e.getProp1());
@@ -59,9 +57,9 @@ public class StorageServiceImplTest {
   @Test
   public void testUserTransactionRollback() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
-    UserTransactionUtil.rollback(tx);
+    UserTransactionUtil.rollback(service);
     GenericEntity e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNull(e);
   }
@@ -69,12 +67,12 @@ public class StorageServiceImplTest {
   @Test
   public void testUserTransactionJoin() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
     
     //rejoin the transaction
-    tx = UserTransactionUtil.startOrJoin(service);
-    UserTransactionUtil.rollback(tx);
+    UserTransactionUtil.beginOrJoin(service);
+    UserTransactionUtil.rollback(service);
     
     GenericEntity e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNull(e);
@@ -83,12 +81,12 @@ public class StorageServiceImplTest {
   @Test
   public void testUserTxReadBeforeCommit() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
     GenericEntity e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNotNull(e);
     Assert.assertEquals("prop1", e.getProp1());
-    UserTransactionUtil.commit(tx);
+    UserTransactionUtil.commit(service);
     
     e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNotNull(e);
@@ -98,18 +96,18 @@ public class StorageServiceImplTest {
   @Test
   public void testStartNewUserTx() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
     GenericEntity e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNotNull(e);
     Assert.assertEquals("prop1", e.getProp1());
-    UserTransactionUtil.commit(tx);
+    UserTransactionUtil.commit(service);
     
-    UserTransaction newTx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     GenericEntity newEntity = service.getDao(GenericEntity.class).get("key");
     newEntity.setProp1("blah!");
     service.getDao(GenericEntity.class).update(newEntity);
-    UserTransactionUtil.commit(newTx);
+    UserTransactionUtil.commit(service);
     
     e = service.getDao(GenericEntity.class).get("key");
     Assert.assertNotNull(e);
@@ -122,35 +120,36 @@ public class StorageServiceImplTest {
     EntityDao<GenericEntity> dao = service.getDao(GenericEntity.class);
     
     // create the entity
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     dao.update(new GenericEntity("key", "prop1"));
-    UserTransactionUtil.commit(tx);
+    UserTransactionUtil.commit(service);
     
     // perform an update, but roll it back.
-    tx = UserTransactionUtil.startOrJoin(service);
-    GenericEntity e = dao.get("key");
-    e.setProp1("prop2");
-    dao.update(e);
-    UserTransactionUtil.rollback(tx);
+    UserTransactionUtil.beginOrJoin(service);
+    dao.update(new GenericEntity("key", "prop2"));
+    UserTransactionUtil.rollback(service);
     
-    e = dao.get("key");
-    Assert.assertEquals("prop1", "prop1");
+    GenericEntity e = dao.get("key");
+    Assert.assertEquals("prop1", e.getProp1());
     
     // verify the index is still in sync
-    CloseableIterator<GenericEntity> i = dao.findAll(new TermQuery(new Term("prop1", "prop2")));
-    Assert.assertTrue(i.hasNext());
     
-    i = dao.findAll(new TermQuery(new Term("prop1", "prop1")));
+    // should not contain an entity where getProp1() == "prop2"
+    CloseableIterator<GenericEntity> i = dao.findAll(new TermQuery(new Term("prop1", "prop2")));
     Assert.assertFalse(i.hasNext());
+    
+    // should contain an entity where getProp1() == "prop1"
+    i = dao.findAll(new TermQuery(new Term("prop1", "prop1")));
+    Assert.assertTrue(i.hasNext());
     
   }
   
   @Test
   public void testFindAll() {
     StorageService service = new InMemoryStorageServiceImpl();
-    UserTransaction tx = UserTransactionUtil.startOrJoin(service);
+    UserTransactionUtil.beginOrJoin(service);
     service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
-    UserTransactionUtil.commit(tx);
+    UserTransactionUtil.commit(service);
     
     CloseableIterator<GenericEntity> allEntities = service.getDao(GenericEntity.class)
         .findAll(new MatchAllDocsQuery());

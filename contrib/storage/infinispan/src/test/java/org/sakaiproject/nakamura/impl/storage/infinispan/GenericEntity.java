@@ -17,6 +17,7 @@
  */
 package org.sakaiproject.nakamura.impl.storage.infinispan;
 
+import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
 import org.sakaiproject.nakamura.api.storage.Entity;
@@ -28,6 +29,8 @@ import org.sakaiproject.nakamura.api.storage.Entity;
 public class GenericEntity implements Entity {
 
   private String key;
+  
+  @Field
   private String prop1;
   
   public GenericEntity(String key, String prop1) {

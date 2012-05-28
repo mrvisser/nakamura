@@ -19,7 +19,6 @@ package org.sakaiproject.nakamura.impl.storage.infinispan;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
-import org.infinispan.context.Flag;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.sakaiproject.nakamura.api.storage.CloseableIterator;
@@ -54,7 +53,7 @@ public class GenericEntityDao<T extends Entity> implements EntityDao<T> {
    */
   @Override
   public T update(T entity) {
-    cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put(entity.getKey(), entity);
+    cache.put(entity.getKey(), entity);
     return entity;
   }
 

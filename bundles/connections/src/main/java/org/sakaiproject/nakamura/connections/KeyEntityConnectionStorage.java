@@ -65,7 +65,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
 
 
 /**
@@ -280,17 +279,17 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
   }
 
   @Override
-  public UserTransaction startOrJoin() {
-    return UserTransactionUtil.startOrJoin(storage);
+  public void startOrJoin() {
+    UserTransactionUtil.beginOrJoin(storage);
   }
 
   @Override
-  public void commit(UserTransaction tx) {
-    UserTransactionUtil.commit(tx);
+  public void commit() {
+    UserTransactionUtil.commit(storage);
   }
 
   @Override
-  public void rollback(UserTransaction tx) {
-    UserTransactionUtil.rollbackQuiet(tx);
+  public void rollback() {
+    UserTransactionUtil.rollbackQuiet(storage);
   }
 }

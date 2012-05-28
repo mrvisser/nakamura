@@ -57,45 +57,37 @@ public class UserTransactionUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserTransactionUtil.class);
   
   /**
-   * Gets (or starts) the active transaction with the provided {@code storageService}.
-   * 
-   * @param transactionManager
-   * @return
-   */
-  public static UserTransaction startOrJoin(StorageService storageService) {
-    return startOrJoin(storageService.getUserTransaction());
-  }
-  
-  /**
    * Starts the user transaction if it's not already started. This is effectively "joining"
    * an existing transaction.
    * 
-   * @param tx
+   * @param storageService
    * @return
    */
-  public static UserTransaction startOrJoin(UserTransaction tx) {
-    try {
-      if (tx.getStatus() == Status.STATUS_NO_TRANSACTION) {
-        tx.begin();
+  public static void beginOrJoin(StorageService storageService) {
+    UserTransaction tx = storageService.getUserTransaction();
+    if (tx != null) {
+      try {
+        if (tx == null || tx.getStatus() != Status.STATUS_ACTIVE) {
+          tx.begin();
+        }
+      } catch (SystemException e) {
+        throw new RuntimeSystemException("Error trying to begin a new transaction.", e);
+      } catch (NotSupportedException e) {
+        throw new RuntimeNotSupportedException("Error trying to begin a new transaction.", e);
       }
-    } catch (SystemException e) {
-      throw new RuntimeSystemException("Error trying to begin a new transaction.", e);
-    } catch (NotSupportedException e) {
-      throw new RuntimeNotSupportedException("Error trying to begin a new transaction.", e);
     }
-    
-    return tx;
   }
   
   /**
    * Roll back the given transaction.
    * 
-   * @param tx
+   * @param storageService
    * @throws RuntimeSystemException if a {@link javax.transaction.SystemException} is thrown.
    */
-  public static void rollback(final UserTransaction tx) throws RuntimeSystemException {
+  public static void rollback(final StorageService storageService) throws RuntimeSystemException {
+    final UserTransaction tx = storageService.getUserTransaction();
     if (tx != null) {
-      ClassLoaderUtil.doInContext(tx.getClass().getClassLoader(), new Runnable() {
+      ClassLoaderUtil.doInContext(storageService.getClass().getClassLoader(), new Runnable() {
         @Override
         public void run() {
           try {
@@ -105,43 +97,48 @@ public class UserTransactionUtil {
           }
         }
       });
-    } else {
-      LOGGER.warn("Attempted to rollback a null transaction.");
     }
   }
   
   /**
    * Roll back the given transaction, suppressing exceptions.
    * 
-   * @param tx
+   * @param storageService
    */
-  public static void rollbackQuiet(final UserTransaction tx) {
+  public static void rollbackQuiet(final StorageService storageService) {
+    final UserTransaction tx = storageService.getUserTransaction();
     if (tx != null) {
-      ClassLoaderUtil.doInContext(tx.getClass().getClassLoader(), new Runnable() {
+      ClassLoaderUtil.doInContext(storageService.getClass().getClassLoader(), new Runnable() {
         @Override
         public void run() {
           try {
-            tx.rollback();
-          } catch (Exception e) {
-            LOGGER.error("Error rolling back transaction.", e);
+          
+            int status = tx.getStatus();
+            try {
+              tx.rollback();
+            } catch (SystemException e) {
+              LOGGER.error("Error rolling back transaction with status "+status, e);
+            }
+          
+          } catch (SystemException e) {
+            LOGGER.error("Error acquiring transaction and status in context.", e);
           }
         }
       });
-    } else {
-      LOGGER.warn("Attempted to rollback a null transaction.");
     }
   }
   
   /**
-   * @param tx
+   * @param storageService
    * @throws RuntimeSystemException if a {@link javax.transaction.SystemException} is thrown.
    * @throws RuntimeRollbackException if a {@link javax.transaction.RollbackException} is thrown.
    * @throws RuntimeHeuristicMixedException if a {@link javax.transaction.HeuristicMixedException} is thrown.
    * @throws RuntimeHeuristicRollbackException if a {@link javax.transaction.HeuristicRollbackException} is thrown.
    */
-  public static void commit(final UserTransaction tx) throws RuntimeSystemException,
+  public static void commit(final StorageService storageService) throws RuntimeSystemException,
       RuntimeRollbackException, RuntimeHeuristicMixedException,
       RuntimeHeuristicRollbackException {
+    final UserTransaction tx = storageService.getUserTransaction();
     if (tx != null) {
       ClassLoaderUtil.doInContext(tx.getClass().getClassLoader(), new Runnable() {
         @Override

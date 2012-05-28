@@ -23,15 +23,14 @@ import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import java.util.List;
 
 import javax.transaction.TransactionManager;
-import javax.transaction.UserTransaction;
 
 public interface ConnectionStorage {
 
-  UserTransaction startOrJoin();
+  void startOrJoin();
   
-  void commit(UserTransaction tx);
+  void commit();
   
-  void rollback(UserTransaction tx);
+  void rollback();
   
   ContactConnection getOrCreateContactConnection(Authorizable thisAu, Authorizable otherAu) throws ConnectionException;
 
