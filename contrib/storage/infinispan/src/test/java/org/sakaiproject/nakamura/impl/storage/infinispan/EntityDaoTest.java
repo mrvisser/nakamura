@@ -21,6 +21,7 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
 
@@ -30,23 +31,36 @@ import org.sakaiproject.nakamura.api.storage.StorageService;
 public class EntityDaoTest {
 
   private StorageService service;
-  private EntityDao<GenericEntity> dao;
   
   @Before
   public void setup() {
     service = new InMemoryStorageServiceImpl();
-    dao = service.getDao(GenericEntity.class);
   }
   
   @Test
   public void testWriteAndRead() {
     GenericEntity entityTransient = new GenericEntity("key", "value1");
-    dao.update(entityTransient);
+    dao(GenericEntity.class).update(entityTransient);
     
     // verify that the entity persisted and properties are accurate.
-    GenericEntity entityPersistent = dao.get("key");
+    GenericEntity entityPersistent = dao(GenericEntity.class).get("key");
     Assert.assertNotNull(entityPersistent);
     Assert.assertEquals("key", entityPersistent.getKey());
     Assert.assertEquals("value1", entityPersistent.getProp1());
+  }
+  
+  @Test
+  public void testDeepCopyUsed() {
+    CopyableGenericEntity e = new CopyableGenericEntity("key", "value1");
+    dao(CopyableGenericEntity.class).update(e);
+    Assert.assertFalse(e.getWasDeepCopied());
+    
+    e = dao(CopyableGenericEntity.class).get("key");
+    Assert.assertTrue(e.getWasDeepCopied());
+    
+  }
+  
+  private <T extends Entity> EntityDao<T> dao(Class<T> clazz) {
+    return service.getDao(clazz);
   }
 }

@@ -17,58 +17,36 @@
  */
 package org.sakaiproject.nakamura.impl.storage.infinispan;
 
-import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
-import org.sakaiproject.nakamura.api.storage.Entity;
-
-import java.io.Serializable;
+import org.sakaiproject.nakamura.api.storage.DeepCopy;
 
 /**
  *
  */
 @Indexed @ProvidedId
-public class GenericEntity implements Entity, Serializable {
+public class CopyableGenericEntity extends GenericEntity implements
+    DeepCopy<CopyableGenericEntity> {
   private static final long serialVersionUID = 1L;
 
-  private String key;
+  boolean wasDeepCopied = false;
   
-  @Field
-  private String prop1;
-  
-  public GenericEntity(String key, String prop1) {
-    this.key = key;
-    this.prop1 = prop1;
+  public CopyableGenericEntity(String key, String prop1) {
+    super(key, prop1);
   }
   
-  /**
-   * @return the key
-   */
-  @Override
-  public String getKey() {
-    return key;
-  }
-  
-  /**
-   * @param key the key to set
-   */
-  public void setKey(String key) {
-    this.key = key;
-  }
-  
-  /**
-   * @return the prop1
-   */
-  public String getProp1() {
-    return prop1;
-  }
-  
-  /**
-   * @param prop1 the prop1 to set
-   */
-  public void setProp1(String prop1) {
-    this.prop1 = prop1;
+  private CopyableGenericEntity(String key, String prop1, boolean deepCopied) {
+    this(key, prop1);
+    this.wasDeepCopied = deepCopied;
   }
 
+  @Override
+  public CopyableGenericEntity deepCopy() {
+    return new CopyableGenericEntity(getKey(), getProp1(), true);
+  }
   
+  public boolean getWasDeepCopied() {
+    return wasDeepCopied;
+  }
+
 }

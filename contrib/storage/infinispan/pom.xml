@@ -122,7 +122,18 @@
 		<version>4.16.4.Final</version>
 		<scope>runtime</scope>
 	</dependency>
+	<dependency>
+		<groupId>org.apache.lucene</groupId>
+		<artifactId>lucene-core</artifactId>
+		<version>3.5.0</version>
+		<scope>provided</scope>
+	</dependency>
   	
+  	<dependency>
+        <groupId>commons-io</groupId>
+        <artifactId>commons-io</artifactId>
+    </dependency>
+    
 <!-- scr annotations -->
     <dependency>
       <groupId>org.apache.felix</groupId>

@@ -22,6 +22,7 @@ import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.sakaiproject.nakamura.api.storage.CloseableIterator;
+import org.sakaiproject.nakamura.api.storage.DeepCopy;
 import org.sakaiproject.nakamura.api.storage.Entity;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 
@@ -42,9 +43,23 @@ public class GenericEntityDao<T extends Entity> implements EntityDao<T> {
    * {@inheritDoc}
    * @see org.sakaiproject.nakamura.api.storage.EntityDao#get(java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   @Override
   public T get(String key) {
-    return cache.get(key);
+    if (key == null)
+      throw new IllegalArgumentException("Cannot get entity based on null key.");
+    
+    T result = cache.get(convertKey(key));
+    
+    if (result != null) {
+      if (result instanceof DeepCopy) {
+        result = ((DeepCopy<T>) result).deepCopy();
+      } else {
+        result = SerializationHelper.deepCopy(result, getClass().getClassLoader());
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -53,7 +68,7 @@ public class GenericEntityDao<T extends Entity> implements EntityDao<T> {
    */
   @Override
   public T update(T entity) {
-    cache.put(entity.getKey(), entity);
+    cache.put(convertKey(entity.getKey()), entity);
     return entity;
   }
 
@@ -67,4 +82,7 @@ public class GenericEntityDao<T extends Entity> implements EntityDao<T> {
     return new PreemptiveCloseableIterator<T>(query.lazyIterator());
   }
 
+  private String convertKey(String key) {
+    return new StringBuilder(type.getCanonicalName()).append(":").append(key).toString();
+  }
 }
