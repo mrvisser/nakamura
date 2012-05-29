@@ -25,15 +25,18 @@ import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
+import org.sakaiproject.nakamura.api.storage.DeepCopy;
 import org.sakaiproject.nakamura.api.storage.Entity;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 @Indexed @ProvidedId
 @Analyzer(impl=KeywordAnalyzer.class)
-public class ContactConnection implements Entity, Serializable {
+public class ContactConnection implements Entity, DeepCopy<ContactConnection>, Serializable {
   
   private static final long serialVersionUID = 1L;
   
@@ -46,6 +49,31 @@ public class ContactConnection implements Entity, Serializable {
   private String firstName = "";
   private String lastName = "";
 
+  public ContactConnection(ContactConnection template) {
+    this.key = template.key;
+    this.connectionState = template.connectionState;
+    
+    if (template.connectionTypes != null) {
+      this.connectionTypes = new HashSet<String>(template.connectionTypes);
+    } else {
+      this.connectionTypes = null;
+    }
+    
+    // FIXME: using generic Object is problematic as you can't really deep-clone it
+    // without serialization. This is an unstable deep-copy, hoping that all Object's
+    // here are Immutable.
+    if (template.properties != null) {
+      this.properties = new HashMap<String, Object>(template.properties);
+    } else {
+      this.properties = null;
+    }
+    
+    this.fromUserId = template.fromUserId;
+    this.toUserId = template.toUserId;
+    this.firstName = template.firstName;
+    this.lastName = template.lastName;
+  }
+  
   public ContactConnection(String key, ConnectionState connectionState, Set<String> connectionTypes,
                            String fromUserId,
                            String toUserId,
@@ -115,6 +143,11 @@ public class ContactConnection implements Entity, Serializable {
 
   public Object getProperty(String propertyName) {
     return properties.get(propertyName);
+  }
+
+  @Override
+  public ContactConnection deepCopy() {
+    return new ContactConnection(this);
   }
 
 }
