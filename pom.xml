@@ -1297,7 +1297,7 @@
       <dependency>
         <groupId>org.sakaiproject.nakamura</groupId>
         <artifactId>org.sakaiproject.nakamura.solr</artifactId>
-        <version>1.5-SNAPSHOT-infinispan</version>
+        <version>1.5-SNAPSHOT</version>
         <scope>provided</scope>
       </dependency>
     </dependencies>

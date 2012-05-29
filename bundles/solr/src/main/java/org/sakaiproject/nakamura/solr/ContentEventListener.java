@@ -68,7 +68,7 @@ public class ContentEventListener implements EventHandler, TopicIndexer,
 		QueueManagerDriver {
 
 
-	@Property(value = { "org/sakaiproject/nakamura/lite/*" }, propertyPrivate = true)
+	@Property(value = { "org/sakaiproject/nakamura/*" }, propertyPrivate = true)
 	static final String TOPICS = EventConstants.EVENT_TOPIC;
 
 	/**
