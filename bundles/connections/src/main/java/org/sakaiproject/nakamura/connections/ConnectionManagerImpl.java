@@ -202,7 +202,6 @@ public class ConnectionManagerImpl implements ConnectionManager {
  
     Session adminSession = null;
     try {
-      connectionStorage.startOrJoin();
       adminSession = repository.loginAdministrative();
 
       // get the contact userstore nodes
@@ -256,28 +255,14 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
       connectionStorage.saveContactConnectionPair(thisNode, otherNode);
 
-      connectionStorage.commit();
-      
       if (operation == ConnectionOperation.invite) {
         throw new ConnectionException(200, "Invitation made between "
             + thisNode.toString() + " and " + otherNode.toString());
       }
-    } catch (ConnectionException e) {
-      // intercept the ConnectionException here. Need to make sure it's not a success (*sigh*) before
-      // deciding if we should roll back.
-      if (e.getCode() != 200) {
-        connectionStorage.rollback();
-      }
-      throw e;
     } catch (StorageClientException e) {
-      connectionStorage.rollback();
       throw new ConnectionException(500, e.getMessage(), e);
     } catch (AccessDeniedException e) {
-      connectionStorage.rollback();
       throw new ConnectionException(403, e.getMessage(), e);
-    } catch (RuntimeException e) {
-      connectionStorage.rollback();
-      throw e;
     } finally {
       if (adminSession != null) {
         // destroy the admin session

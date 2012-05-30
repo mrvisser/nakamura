@@ -15,40 +15,26 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.storage.exceptions;
+package org.sakaiproject.nakamura.api.morphia;
+
+import com.google.code.morphia.Datastore;
 
 /**
- * Runtime version of the javax.transaction.SystemException
+ *
  */
-public class RuntimeSystemException extends RuntimeException {
-  private static final long serialVersionUID = 1L;
+public interface MorphiaDatastoreProvider {
 
   /**
+   * Get the container morphia datastore.
    * 
+   * @return
    */
-  public RuntimeSystemException() {
-    super();
-  }
-
+  Datastore datastore();
+  
   /**
-   * @param message
-   * @param e
+   * Map a class to the morphia datastore.
+   * 
+   * @param clazz
    */
-  public RuntimeSystemException(String message, Throwable e) {
-    super(message, e);
-  }
-
-  /**
-   * @param message
-   */
-  public RuntimeSystemException(String message) {
-    super(message);
-  }
-
-  /**
-   * @param message
-   */
-  public RuntimeSystemException(Throwable e) {
-    super(e);
-  }
+  void map(Class<?> clazz);
 }

@@ -15,40 +15,30 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.api.storage.exceptions;
+package org.sakaiproject.nakamura.impl.morphia;
+
+import com.google.code.morphia.mapping.DefaultCreator;
+
+import com.mongodb.DBObject;
 
 /**
- * Runtime version of the javax.transaction.SystemException
+ * Object factory implementation that uses a provided class loader instead of the
+ * thread class loader.
  */
-public class RuntimeHeuristicMixedException extends RuntimeException {
-  private static final long serialVersionUID = 1L;
+public class BundleObjectFactory extends DefaultCreator {
 
-  /**
-   * 
-   */
-  public RuntimeHeuristicMixedException() {
-    super();
+  private ClassLoader classLoader;
+  
+  public BundleObjectFactory(ClassLoader classLoader) {
+    this.classLoader = classLoader;
   }
 
   /**
-   * @param message
-   * @param e
+   * {@inheritDoc}
+   * @see com.google.code.morphia.mapping.DefaultCreator#getClassLoaderForClass(java.lang.String, com.mongodb.DBObject)
    */
-  public RuntimeHeuristicMixedException(String message, Throwable e) {
-    super(message, e);
-  }
-
-  /**
-   * @param message
-   */
-  public RuntimeHeuristicMixedException(String message) {
-    super(message);
-  }
-
-  /**
-   * @param message
-   */
-  public RuntimeHeuristicMixedException(Throwable e) {
-    super(e);
+  @Override
+  protected ClassLoader getClassLoaderForClass(String clazz, DBObject object) {
+    return classLoader;
   }
 }

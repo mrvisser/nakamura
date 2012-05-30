@@ -114,9 +114,9 @@
         <module>bundles/lom</module>
         <module>bundles/content-packaging</module>
         <module>bundles/postgresqlwrapper</module>
-        <module>contrib/storage/api</module>
-        <module>contrib/storage/infinispan</module>
         <module>bundles/solr</module>
+        <module>contrib/storage/api</module>
+        <module>contrib/morphia</module>
         <module>testscripts</module>
       </modules>
     </profile>
@@ -915,6 +915,10 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
+  	<repository>
+	  <id>morphia</id>
+  	  <url>http://morphia.googlecode.com/svn/mavenrepo</url>
+  	</repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
@@ -1300,6 +1304,12 @@
         <version>1.5-SNAPSHOT</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+  		<groupId>com.google.code.morphia</groupId>
+  		<artifactId>morphia</artifactId>
+  		<version>1.00-SNAPSHOT</version>
+  		<scope>provided</scope>
+  	  </dependency>
     </dependencies>
   </dependencyManagement>
 </project>

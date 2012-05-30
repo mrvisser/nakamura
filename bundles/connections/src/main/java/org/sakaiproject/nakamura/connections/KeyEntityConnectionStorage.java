@@ -17,21 +17,17 @@ package org.sakaiproject.nakamura.connections;
  * specific language governing permissions and limitations under the License.
  */
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.connections.ConnectionConstants;
@@ -50,21 +46,12 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.storage.CloseableIterator;
-import org.sakaiproject.nakamura.api.storage.DomainProvider;
-import org.sakaiproject.nakamura.api.storage.Entity;
-import org.sakaiproject.nakamura.api.storage.EntityDao;
-import org.sakaiproject.nakamura.api.storage.StorageService;
-import org.sakaiproject.nakamura.api.storage.UserTransactionUtil;
+import org.sakaiproject.nakamura.api.morphia.MorphiaDatastoreProvider;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.transaction.TransactionManager;
 
 
 /**
@@ -72,16 +59,13 @@ import javax.transaction.TransactionManager;
  */
 @Service
 @Component
-public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProvider {
+public class KeyEntityConnectionStorage implements ConnectionStorage {
 
-  private final static Set<Class<? extends Entity>> DOMAIN = ImmutableSet.
-      <Class<? extends Entity>>of(ContactConnection.class);
-  
   @Reference
   protected Repository repository;
 
   @Reference
-  protected StorageService storage;
+  protected MorphiaDatastoreProvider datastoreProvider;
   
   @Reference
   protected EventAdmin eventAdmin;
@@ -90,10 +74,17 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
     
   }
   
-  public KeyEntityConnectionStorage(Repository repository, StorageService storage, EventAdmin eventAdmin) {
+  public KeyEntityConnectionStorage(Repository repository,
+      MorphiaDatastoreProvider provider, EventAdmin eventAdmin) {
     this.repository = repository;
-    this.storage = storage;
+    this.datastoreProvider = provider;
     this.eventAdmin = eventAdmin;
+    activate();
+  }
+  
+  @Activate
+  public void activate() {
+    datastoreProvider.map(ContactConnection.class);
   }
   
   @Override
@@ -101,10 +92,11 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
       throws ConnectionException {
     String nodePath = ConnectionUtils.getConnectionPath(fromUser, toUser);
     Session session = null;
-    EntityDao<ContactConnection> dao = createDao();
     try {
       session = repository.loginAdministrative();
-      ContactConnection connection = dao.get(nodePath);
+      Query<ContactConnection> query = datastoreProvider.datastore().find(
+          ContactConnection.class, "key", nodePath);
+      ContactConnection connection = query.get();
       if (connection == null) {
         // Add auth name for sorting (KERN-1924)
         String firstName = "";
@@ -125,7 +117,7 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
         
         connection = makeContactConnection(fromUser, toUser, new Content(nodePath, props));
         
-        dao.update(connection);
+        datastoreProvider.datastore().save(connection);
         
         Event event = ConnectionEventUtil.createCreateConnectionEvent(connection);
         eventAdmin.sendEvent(event);
@@ -144,15 +136,6 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
     }
   }
 
-  /**
-   * {@inheritDoc}
-   * @see org.sakaiproject.nakamura.api.connections.ConnectionStorage#getTransactionManager()
-   */
-  @Override
-  public TransactionManager getTransactionManager() {
-    return storage.getTransactionManager();
-  }
-  
   private ContactConnection makeContactConnection(Authorizable fromUser, Authorizable toUser, Content connectionContent) {
     if (fromUser == null || toUser == null || connectionContent == null) {
       return null;
@@ -175,13 +158,15 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
   public void saveContactConnectionPair(ContactConnection thisNode, ContactConnection otherNode)
       throws ConnectionException {
     try {
-      EntityDao<ContactConnection> dao = storage.getDao(ContactConnection.class);
+      Datastore ds = datastoreProvider.datastore();
+      Query<ContactConnection> q = ds.find(ContactConnection.class, "key", thisNode.getKey());
+      ContactConnection oldThisNode = q.get();
       
-      ContactConnection oldThisNode = dao.get(thisNode.getKey());
-      ContactConnection oldOtherNode = dao.get(otherNode.getKey());
+      q = ds.find(ContactConnection.class, "key", otherNode.getKey());
+      ContactConnection oldOtherNode = q.get();
       
-      dao.update(thisNode);
-      dao.update(otherNode);
+      ds.save(thisNode);
+      ds.save(otherNode);
       
       Event event = null;
       if (oldThisNode == null) {
@@ -208,7 +193,7 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
   @Override
   public ContactConnection getContactConnection(Authorizable thisUser, Authorizable otherUser) throws ConnectionException {
     String contentPath = ConnectionUtils.getConnectionPath(thisUser, otherUser, null);
-    return createDao().get(contentPath);
+    return datastoreProvider.datastore().find(ContactConnection.class, "key", contentPath).get();
   }
 
   /**
@@ -219,21 +204,14 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
   public List<String> getConnectedUsers(Session session, String userId, ConnectionState state) throws ConnectionException {
     checkCanReadConnections(session, userId);
     List<String> usernames = Lists.newArrayList();
-    EntityDao<ContactConnection> dao = storage.getDao(ContactConnection.class);
     
-    // search by connection state and from user id
-    BooleanQuery query = new BooleanQuery();
-    query.add(new BooleanClause(simpleTermQuery("connectionState", state.toString()), Occur.MUST));
-    query.add(new BooleanClause(simpleTermQuery("fromUserId", userId), Occur.MUST));
+    Query<ContactConnection> q = datastoreProvider.datastore().createQuery(ContactConnection.class)
+        .filter("connectionState =", state).filter("fromUserId =", userId);
     
-    CloseableIterator<ContactConnection> connections = dao.findAll(query);
-    try {
-      while (connections.hasNext()) {
-        usernames.add(connections.next().getToUserId());
-      }
-    } finally {
-      close(connections);
+    for (ContactConnection connection : q) {
+      usernames.add(connection.getToUserId());
     }
+    
     return usernames;
   }
   
@@ -255,41 +233,5 @@ public class KeyEntityConnectionStorage implements ConnectionStorage, DomainProv
           + userId, e);
     }
   }
-  
-  private Query simpleTermQuery(String field, String value) {
-    return new TermQuery(new Term(field, value));
-  }
-  
-  private EntityDao<ContactConnection> createDao() {
-    return storage.getDao(ContactConnection.class);
-  }
 
-  @Override
-  public Set<Class<? extends Entity>> getDomainClasses() {
-    return DOMAIN;
-  }
-
-  private void close(Closeable c) {
-    if (c != null) {
-      try {
-        c.close();
-      } catch (IOException e) {
-      }
-    }
-  }
-
-  @Override
-  public void startOrJoin() {
-    UserTransactionUtil.beginOrJoin(storage);
-  }
-
-  @Override
-  public void commit() {
-    UserTransactionUtil.commit(storage);
-  }
-
-  @Override
-  public void rollback() {
-    UserTransactionUtil.rollbackQuiet(storage);
-  }
 }

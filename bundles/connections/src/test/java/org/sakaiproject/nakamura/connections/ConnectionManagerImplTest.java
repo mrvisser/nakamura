@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.user.UserConstants;
-import org.sakaiproject.nakamura.impl.storage.infinispan.InMemoryStorageServiceImpl;
+import org.sakaiproject.nakamura.impl.morphia.MorphiaDatastoreProviderImpl;
 import org.sakaiproject.nakamura.lite.BaseMemoryRepository;
 import org.sakaiproject.nakamura.lite.RepositoryImpl;
 import org.sakaiproject.nakamura.util.ExtendedJSONWriter;
@@ -58,16 +59,23 @@ public class ConnectionManagerImplTest {
 
   private ConnectionManagerImpl connectionManager;
   private RepositoryImpl repository;
+  private MorphiaDatastoreProviderImpl provider;
   private KeyEntityConnectionStorage connectionStorage;
 
   @Before
   public void setUp() throws StorageClientException, AccessDeniedException, ClassNotFoundException, IOException {
     BaseMemoryRepository baseMemoryRepository = new BaseMemoryRepository();
     repository = baseMemoryRepository.getRepository();
+    provider = new MorphiaDatastoreProviderImpl(null, -1, null);
     connectionManager = new ConnectionManagerImpl();
-    connectionStorage = new KeyEntityConnectionStorage(repository,
-        new InMemoryStorageServiceImpl(), Mockito.mock(EventAdmin.class));
+    connectionStorage = new KeyEntityConnectionStorage(repository, provider, Mockito.mock(EventAdmin.class));
     connectionManager.connectionStorage = connectionStorage;
+  }
+  
+  @After
+  public void teardown() {
+    provider.datastore().getDB().dropDatabase();
+    provider.deactivate();
   }
 
   @Test

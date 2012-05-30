@@ -35,13 +35,13 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
+import org.sakaiproject.nakamura.api.morphia.MorphiaDatastoreProvider;
 import org.sakaiproject.nakamura.api.search.solr.Query;
 import org.sakaiproject.nakamura.api.search.solr.Result;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchException;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultProcessor;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultSet;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.user.BasicUserInfoService;
 import org.sakaiproject.nakamura.connections.ConnectionUtils;
 import org.sakaiproject.nakamura.util.ExtendedJSONWriter;
@@ -69,7 +69,7 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
   BasicUserInfoService basicUserInfoService;
 
   @Reference
-  StorageService storageService;
+  MorphiaDatastoreProvider morphia;
   
   public void writeResult(SlingHttpServletRequest request, JSONWriter writer, Result result)
       throws JSONException {
@@ -85,7 +85,8 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
       Authorizable auth = authMgr.findAuthorizable(contactUser);
       String contactContentPath = result.getPath();
       logger.debug("getting " + contactContentPath);
-      ContactConnection connection = storageService.getDao(ContactConnection.class).get(contactContentPath);
+      ContactConnection connection = morphia.datastore().createQuery(ContactConnection.class)
+          .filter("key =", contactContentPath).get();
       if (connection != null) {
         writer.object();
         writer.key("target");

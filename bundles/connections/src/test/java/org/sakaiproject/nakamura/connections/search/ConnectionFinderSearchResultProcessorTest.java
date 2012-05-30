@@ -22,6 +22,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
+import com.google.code.morphia.Datastore;
+import com.google.code.morphia.query.Query;
+
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.request.RequestPathInfo;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -43,10 +46,9 @@ import org.sakaiproject.nakamura.api.lite.authorizable.AuthorizableManager;
 import org.sakaiproject.nakamura.api.lite.authorizable.User;
 import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
+import org.sakaiproject.nakamura.api.morphia.MorphiaDatastoreProvider;
 import org.sakaiproject.nakamura.api.search.solr.Result;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
-import org.sakaiproject.nakamura.api.storage.EntityDao;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.user.UserConstants;
 import org.sakaiproject.nakamura.api.user.counts.CountProvider;
 import org.sakaiproject.nakamura.user.BasicUserInfoServiceImpl;
@@ -72,10 +74,13 @@ public class ConnectionFinderSearchResultProcessorTest {
   ContentManager cm;
 
   @Mock
-  StorageService storageService;
-
+  MorphiaDatastoreProvider morphia;
+  
   @Mock
-  EntityDao<ContactConnection> dao;
+  Datastore datastore;
+  
+  @Mock
+  Query<ContactConnection> query;
   
   @Test
   public void test() throws Exception {
@@ -88,9 +93,11 @@ public class ConnectionFinderSearchResultProcessorTest {
           return this;
         }
     }.setup();
-    processor.storageService = storageService;
+    processor.morphia = morphia;
     
-    when(storageService.getDao(ContactConnection.class)).thenReturn(dao);
+    when(morphia.datastore()).thenReturn(datastore);
+    when(datastore.createQuery(ContactConnection.class)).thenReturn(query);
+    when(query.filter("key =", "a:alice/contacts/bob")).thenReturn(query);
     
     Object hybridSession = mock(javax.jcr.Session.class, withSettings()
         .extraInterfaces(SessionAdaptable.class));
@@ -135,7 +142,7 @@ public class ConnectionFinderSearchResultProcessorTest {
     
     ContactConnection connection = new ContactConnection("a:alice/contacts/bob", ConnectionState.ACCEPTED,
         new HashSet<String>(), "alice", "bob", "Alice", "Cooper", new HashMap<String, Object>()); 
-    when(dao.get("a:alice/contacts/bob")).thenReturn(connection);
+    when(query.get()).thenReturn(connection);
 
     RequestPathInfo pathInfo = mock(RequestPathInfo.class);
     when(request.getRequestPathInfo()).thenReturn(pathInfo);

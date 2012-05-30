@@ -24,9 +24,9 @@
     <relativePath>../../../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>org.sakaiproject.nakamura.storage.api</artifactId>
+  <artifactId>org.sakaiproject.nakamura.morphia</artifactId>
   <packaging>bundle</packaging>
-  <name>Sakai Nakamura :: Storage Bundle api</name>
+  <name>Sakai Nakamura :: Morphia Storage Bundle</name>
   <build>
     <plugins>
       <plugin>
@@ -40,14 +40,42 @@
         <configuration>
           <instructions>
             <Bundle-Category>sakai-nakamura</Bundle-Category>
-            <Export-Package>org.sakaiproject.nakamura.api.storage</Export-Package>
+            <Import-Package>
+            	!com.thoughtworks.proxy.*,
+            	*
+            </Import-Package>
+            <DynamicImport-Package>*</DynamicImport-Package>
+            <Export-Package>
+            	org.sakaiproject.nakamura.api.morphia.*,
+            	com.google.code.morphia.*;version="1.0"
+            </Export-Package>
+            <Embed-Dependency>morphia</Embed-Dependency>
+            
           </instructions>
         </configuration>
       </plugin>
     </plugins>
   </build>
   <dependencies>
-
+  
+  	<dependency>
+  		<groupId>com.google.code.morphia</groupId>
+  		<artifactId>morphia</artifactId>
+  	</dependency>
+  	<dependency>
+    	<groupId>org.mongodb</groupId>
+    	<artifactId>mongo-java-driver</artifactId>
+    	<version>2.7.3</version>
+    	<scope>provided</scope>
+	</dependency>
+  	
+  	<dependency>
+  		<groupId>org.sakaiproject.nakamura</groupId>
+  		<artifactId>org.sakaiproject.nakamura.storage.api</artifactId>
+  		<version>${project.version}</version>
+  		<scope>provided</scope>
+  	</dependency>
+  	
 <!-- osgi -->
     <dependency>
       <groupId>org.apache.felix</groupId>
@@ -57,8 +85,10 @@
       <groupId>org.apache.felix</groupId>
       <artifactId>org.osgi.compendium</artifactId>
     </dependency>
-
-<!-- OSGi utils -->
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.scr.annotations</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.sling</groupId>
       <artifactId>org.apache.sling.commons.osgi</artifactId>

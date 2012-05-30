@@ -17,61 +17,45 @@
  */
 package org.sakaiproject.nakamura.api.connections;
 
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Indexed;
+import com.google.code.morphia.annotations.Serialized;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import org.apache.lucene.analysis.KeywordAnalyzer;
-import org.hibernate.search.annotations.Analyzer;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
-import org.sakaiproject.nakamura.api.storage.DeepCopy;
-import org.sakaiproject.nakamura.api.storage.Entity;
+import org.apache.solr.client.solrj.beans.Field;
+import org.bson.types.ObjectId;
 
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Indexed @ProvidedId
-@Analyzer(impl=KeywordAnalyzer.class)
-public class ContactConnection implements Entity, DeepCopy<ContactConnection>, Serializable {
+@Entity
+public class ContactConnection implements org.sakaiproject.nakamura.api.storage.Entity {
   
-  private static final long serialVersionUID = 1L;
+  @Id
+  ObjectId id;
   
+  @Indexed(unique=true)
   private String key = null;
+  
+  @Indexed
   private ConnectionState connectionState = ConnectionState.NONE;
+  
   private Set<String> connectionTypes = Sets.newHashSet();
+  
+  @Serialized
   private Map<String,Object> properties = Maps.newHashMap();
+  
+  @Indexed
   private String fromUserId = "";
+  
   private String toUserId = "";
   private String firstName = "";
   private String lastName = "";
 
-  public ContactConnection(ContactConnection template) {
-    this.key = template.key;
-    this.connectionState = template.connectionState;
+  public ContactConnection() {
     
-    if (template.connectionTypes != null) {
-      this.connectionTypes = new HashSet<String>(template.connectionTypes);
-    } else {
-      this.connectionTypes = null;
-    }
-    
-    // FIXME: using generic Object is problematic as you can't really deep-clone it
-    // without serialization. This is an unstable deep-copy, hoping that all Object's
-    // here are Immutable.
-    if (template.properties != null) {
-      this.properties = new HashMap<String, Object>(template.properties);
-    } else {
-      this.properties = null;
-    }
-    
-    this.fromUserId = template.fromUserId;
-    this.toUserId = template.toUserId;
-    this.firstName = template.firstName;
-    this.lastName = template.lastName;
   }
   
   public ContactConnection(String key, ConnectionState connectionState, Set<String> connectionTypes,
@@ -90,10 +74,10 @@ public class ContactConnection implements Entity, DeepCopy<ContactConnection>, S
     if (additionalProperties != null) this.properties = additionalProperties;
   }
 
-  /**
-   * {@inheritDoc}
-   * @see org.sakaiproject.nakamura.api.storage.Entity#getKey()
-   */
+  public ObjectId getId() {
+    return id;
+  }
+  
   @Override
   public String getKey() {
     return this.key;
@@ -143,11 +127,6 @@ public class ContactConnection implements Entity, DeepCopy<ContactConnection>, S
 
   public Object getProperty(String propertyName) {
     return properties.get(propertyName);
-  }
-
-  @Override
-  public ContactConnection deepCopy() {
-    return new ContactConnection(this);
   }
 
 }
