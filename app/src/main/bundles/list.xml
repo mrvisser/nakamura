@@ -400,6 +400,11 @@ KERN-1187
     	<artifactId>org.sakaiproject.nakamura.storage.infinispan</artifactId>
     	<version>1.4.0-SNAPSHOT</version>
     </bundle>
+    <bundle>
+	    <groupId>org.sakaiproject.nakamura</groupId>
+    	<artifactId>org.sakaiproject.nakamura.wink</artifactId>
+	    <version>1.4.0-SNAPSHOT</version>
+	</bundle>
     
     <bundle>
       <groupId>com.googlecode.guava-osgi</groupId>
@@ -631,6 +636,14 @@ KERN-1187
       <artifactId>org.sakaiproject.nakamura.email.outgoing</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
+   </startLevel>
+   <startLevel level="25">
+   	<!-- REST API services -->
+   	<bundle>
+	  <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.wink-test</artifactId>
+	  <version>1.4.0-SNAPSHOT</version>
+	</bundle>
    </startLevel>
    <startLevel level="30" >
     <bundle>
