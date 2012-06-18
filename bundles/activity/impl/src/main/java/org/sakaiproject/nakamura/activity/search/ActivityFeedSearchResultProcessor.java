@@ -89,6 +89,8 @@ public class ActivityFeedSearchResultProcessor implements SolrSearchResultProces
       Content contentResult = session.getContentManager().get(contentPath);
       write.object();
       if (contentResult != null) {
+        // do not expose routes
+        contentResult.setProperty(ActivityConstants.PARAM_ROUTES, null);
         ExtendedJSONWriter.writeContentTreeToWriter(write, contentResult, true, -1);
 
         String actor = String.valueOf(contentResult
