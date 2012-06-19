@@ -97,20 +97,24 @@ public class ActivityRoutesMigrator extends HttpServlet {
             Content.SLING_RESOURCE_TYPE_FIELD))) {
           String path = c.getPath();
           
-          // get the route path, which is 2 above the activity path (first activityFeed, then the route)
+          // this grabs the a:userId/private/activityFeed path, which is the route of this activity item.
           String routePath = StorageClientUtils.getParentObjectPath(path);
-          routePath = StorageClientUtils.getParentObjectPath(routePath);
           
           // create the route info and lock it down to admin
           String routesFieldPath = StorageClientUtils.newPath(path, ActivityConstants.PARAM_ROUTES);
           if (!cm.exists(routesFieldPath)) {
-            Content route = new Content(routesFieldPath, new HashMap<String, Object>());
-            route.setProperty(ActivityConstants.PARAM_ROUTES, new String[] { routePath });
-            cm.update(route);
-            session.getAccessControlManager().setAcl(Security.ZONE_CONTENT, routesFieldPath, new AclModification[] {
-                new AclModification(AclModification.denyKey(User.ANON_USER), Permissions.ALL.getPermission(), Operation.OP_REPLACE),
-                new AclModification(AclModification.denyKey(Group.EVERYONE), Permissions.ALL.getPermission(), Operation.OP_REPLACE)
-              });
+            try {
+              Content route = new Content(routesFieldPath, new HashMap<String, Object>());
+              route.setProperty(ActivityConstants.PARAM_ROUTES, new String[] { routePath });
+              cm.update(route);
+              session.getAccessControlManager().setAcl(Security.ZONE_CONTENT, routesFieldPath, new AclModification[] {
+                  new AclModification(AclModification.denyKey(User.ANON_USER), Permissions.ALL.getPermission(), Operation.OP_REPLACE),
+                  new AclModification(AclModification.denyKey(Group.EVERYONE), Permissions.ALL.getPermission(), Operation.OP_REPLACE)
+                });
+              LOGGER.info("Migrated activity record '{}' with route: '{}'", path, routePath);
+            } catch (Exception e) {
+              LOGGER.warn("Skipping migration of activity record '"+path+"' due to exception.", e);
+            }
           }
         }
       }
