@@ -814,6 +814,14 @@
 <!-- R E P O S I T O R I E S -->
 <!-- ====================================================================== -->
   <repositories>
+  	<repository>
+      <id>eclipse</id>
+      <name>Eclipse Repository</name>
+      <url>http://download.eclipse.org/rt/eclipselink/maven.repo</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
     <repository>
       <id>maven repo</id>
       <name>maven repo</name>
@@ -993,6 +1001,13 @@
         <version>2.1.1</version>
         <scope>provided</scope>
       </dependency>
+
+	  <dependency>
+		<groupId>org.eclipse.persistence</groupId>
+		<artifactId>javax.persistence</artifactId>
+		<version>2.0.3</version>
+		<scope>provided</scope>
+	  </dependency>
 
 <!-- scr annotations -->
       <dependency>

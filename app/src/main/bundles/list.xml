@@ -234,7 +234,35 @@ KERN-1187
             <version>2.1.4.0-SNAPSHOT</version>
         </bundle>
         -->
-
+        
+        <!-- START eclipse bundles: http://wiki.eclipse.org/EclipseLink/Maven#Identifiers -->
+		<bundle>
+        	<groupId>org.eclipse.persistence</groupId>
+        	<artifactId>javax.persistence</artifactId>
+        	<version>2.0.3</version>
+		</bundle>
+		<bundle>
+        	<groupId>org.eclipse.persistence</groupId>
+        	<artifactId>org.eclipse.persistence.core</artifactId>
+        	<version>2.3.2</version>
+		</bundle>
+		<bundle>
+        	<groupId>org.eclipse.persistence</groupId>
+        	<artifactId>org.eclipse.persistence.antlr</artifactId>
+        	<version>2.3.2</version>
+		</bundle>
+		<bundle>
+        	<groupId>org.eclipse.persistence</groupId>
+        	<artifactId>org.eclipse.persistence.asm</artifactId>
+        	<version>2.3.2</version>
+		</bundle>
+		<bundle>
+        	<groupId>org.eclipse.persistence</groupId>
+        	<artifactId>org.eclipse.persistence.jpa</artifactId>
+        	<version>2.3.2</version>
+		</bundle>
+		<!-- END eclipse bundles -->
+		
         <bundle>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.commons.log</artifactId>
