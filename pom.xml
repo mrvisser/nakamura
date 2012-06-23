@@ -115,6 +115,8 @@
         <module>bundles/lom</module>
         <module>bundles/content-packaging</module>
         <module>bundles/postgresqlwrapper</module>
+        <module>bundles/javax.jdo.jdo-api</module>
+        <module>bundles/jdo</module>
         <module>bundles/solr</module>
         <module>testscripts</module>
       </modules>
@@ -814,6 +816,11 @@
 <!-- R E P O S I T O R I E S -->
 <!-- ====================================================================== -->
   <repositories>
+  	<repository>
+  		<id>datanucleus</id>
+  		<name>Data Nucleus</name>
+  		<url>http://www.datanucleus.org/downloads/maven2/</url>
+  	</repository>
     <repository>
       <id>maven repo</id>
       <name>maven repo</name>
@@ -916,6 +923,10 @@
     </repository>
   </repositories>
   <pluginRepositories>
+	<pluginRepository>
+		<id>DataNucleus</id>
+		<url>http://www.datanucleus.org/downloads/maven2/</url>
+	</pluginRepository>
     <pluginRepository>
       <id>apache-plugin-snapshot</id>
       <name>Apache Snapshots Plugins</name>
@@ -993,6 +1004,30 @@
         <version>2.1.1</version>
         <scope>provided</scope>
       </dependency>
+	  <dependency>
+       	<groupId>javax.jdo</groupId>
+       	<artifactId>jdo-api</artifactId>
+       	<version>3.1-SNAPSHOT-20120609</version>
+       	<scope>provided</scope>
+      </dependency>
+      <dependency>
+		<groupId>org.datanucleus</groupId>
+		<artifactId>datanucleus-core</artifactId>
+		<version>3.0.11</version>
+		<scope>provided</scope>
+	  </dependency>
+	  <dependency>
+		<groupId>org.datanucleus</groupId>
+		<artifactId>datanucleus-api-jdo</artifactId>
+		<version>3.0.8</version>
+		<scope>provided</scope>
+	  </dependency>
+	  <dependency>
+		<groupId>org.sakaiproject</groupId>
+		<artifactId>org.sakaiproject.nakamura.jdo</artifactId>
+		<version>0.1-SNAPSHOT</version>
+		<scope>provided</scope>
+	  </dependency>
 
 <!-- scr annotations -->
       <dependency>
@@ -1265,6 +1300,12 @@
         <version>1.5.6</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.4</version>
+        <scope>provided</scope>
+      </dependency>      
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-email</artifactId>
