@@ -118,6 +118,7 @@
         <module>bundles/javax.jdo.jdo-api</module>
         <module>bundles/jdo</module>
         <module>bundles/solr</module>
+        <module>bundles/robots.txt</module>
         <module>testscripts</module>
       </modules>
     </profile>
