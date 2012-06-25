@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
@@ -55,10 +56,22 @@ public class TaskServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Task task = new Task(req.getParameter("name"), req.getParameter("who"));
-    LOGGER.info("Creating task {}", task);
-    taskService.createTask(task);
+    String id = req.getParameter("id");
+    if (id == null) {
+      Task task = new Task(req.getParameter("name"), req.getParameter("who"));
+      taskService.createTask(task);
+    } else {
+      if ("all".equals(id)) {
+        List<Task> tasks = taskService.listAll();
+        for (Task task : tasks) {
+          resp.getWriter().write(task.toString());
+          resp.getWriter().write("\n");
+        }
+      } else {
+        Task task = taskService.getTaskById(Long.valueOf(id));
+        resp.getWriter().write(task.toString());
+      }
+    }
   }
 
-  
 }

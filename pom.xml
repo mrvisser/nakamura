@@ -114,11 +114,11 @@
         <module>bundles/upgrade</module>
         <module>bundles/lom</module>
         <module>bundles/content-packaging</module>
+        <module>bundles/classloader</module>
         <module>bundles/postgresqlwrapper</module>
         <module>bundles/javax.jdo.jdo-api</module>
         <module>bundles/jdo</module>
         <module>bundles/solr</module>
-        <module>bundles/robots.txt</module>
         <module>testscripts</module>
       </modules>
     </profile>
@@ -1026,6 +1026,12 @@
 	  <dependency>
 		<groupId>org.sakaiproject</groupId>
 		<artifactId>org.sakaiproject.nakamura.jdo</artifactId>
+		<version>0.1-SNAPSHOT</version>
+		<scope>provided</scope>
+	  </dependency>
+	  <dependency>
+		<groupId>org.sakaiproject.nakamura</groupId>
+		<artifactId>org.sakaiproject.nakamura.classloader</artifactId>
 		<version>0.1-SNAPSHOT</version>
 		<scope>provided</scope>
 	  </dependency>

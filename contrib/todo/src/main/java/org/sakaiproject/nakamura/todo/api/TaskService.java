@@ -17,12 +17,11 @@
  */
 package org.sakaiproject.nakamura.todo.api;
 
-import org.apache.felix.scr.annotations.Activate;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
@@ -34,16 +33,9 @@ import javax.jdo.PersistenceManagerFactory;
 @Component(immediate=true)
 public class TaskService {
 
-  private final static Logger LOGGER = LoggerFactory.getLogger(TaskService.class);
-  
   @Reference
   PersistenceManagerFactory persistenceManagerFactory;
-  
-  @Activate
-  void activate() {
-    LOGGER.info("activate()");
-  }
-  
+
   public Task createTask(Task task) {
     PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     try {
@@ -58,6 +50,17 @@ public class TaskService {
     PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     try {
       return pm.getObjectById(Task.class, id);
+    } finally {
+      pm.close();
+    }
+  }
+  
+  public List<Task> listAll() {
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    try {
+      @SuppressWarnings("unchecked")
+      List<Task> tasks = (List<Task>)pm.newQuery(Task.class).execute();
+      return tasks;
     } finally {
       pm.close();
     }

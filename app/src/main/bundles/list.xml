@@ -3,6 +3,11 @@
 <!-- Sling source at launchpad/builder/src/main/bundles/list.xml    -->
 <bundles>
     <startLevel level="0">
+    	<bundle>
+            <groupId>org.sakaiproject.nakamura</groupId>
+            <artifactId>org.sakaiproject.nakamura.classloader</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </bundle>
         <bundle>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
