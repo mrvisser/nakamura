@@ -45,12 +45,9 @@ import org.sakaiproject.nakamura.resource.lite.servlet.post.helper.DefaultNodeNa
 import org.sakaiproject.nakamura.resource.lite.servlet.post.helper.MediaRangeList;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.CheckinOperation;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.CheckoutOperation;
-import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.CopyOperation;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.CreateTreeOperation;
-import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.DeleteOperation;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.ImportOperation;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.ModifyOperation;
-import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.MoveOperation;
 import org.sakaiproject.nakamura.resource.lite.servlet.post.operations.NopOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,20 +157,25 @@ public class SparsePostServlet extends SlingAllMethodsServlet {
     //postOperations.put(SlingPostConstants.OPERATION_COPY, new CopyOperation());
     //postOperations.put(SlingPostConstants.OPERATION_MOVE, new MoveOperation());
     //postOperations.put(SlingPostConstants.OPERATION_DELETE, new DeleteOperation());
-    postOperations.put(SlingPostConstants.OPERATION_NOP, new NopOperation());
-    postOperations.put(SlingPostConstants.OPERATION_CHECKIN, new CheckinOperation());
-    postOperations.put(SlingPostConstants.OPERATION_CHECKOUT, new CheckoutOperation());
-
-    importOperation = new ImportOperation(defaultNodeNameGenerator);
-    importOperation.setExtraNodeNameGenerators(cachedNodeNameGenerators);
-    postOperations.put(SlingPostConstants.OPERATION_IMPORT, importOperation);
-    postOperations.put("createTree", new CreateTreeOperation());
+    
+    synchronized(postOperations) {
+      postOperations.put(SlingPostConstants.OPERATION_NOP, new NopOperation());
+      postOperations.put(SlingPostConstants.OPERATION_CHECKIN, new CheckinOperation());
+      postOperations.put(SlingPostConstants.OPERATION_CHECKOUT, new CheckoutOperation());
+  
+      importOperation = new ImportOperation(defaultNodeNameGenerator);
+      importOperation.setExtraNodeNameGenerators(cachedNodeNameGenerators);
+      postOperations.put(SlingPostConstants.OPERATION_IMPORT, importOperation);
+      postOperations.put("createTree", new CreateTreeOperation());
+    }
   }
 
   @Override
   public void destroy() {
     modifyOperation = null;
-    postOperations.clear();
+    synchronized(postOperations) {
+      postOperations.clear();
+    }
   }
 
   @Override
