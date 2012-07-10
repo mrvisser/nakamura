@@ -48,8 +48,6 @@ import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
 import org.sakaiproject.nakamura.api.storage.EntityDao;
 import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.user.UserConstants;
-import org.sakaiproject.nakamura.api.user.counts.CountProvider;
-import org.sakaiproject.nakamura.user.BasicUserInfoServiceImpl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
@@ -73,6 +71,8 @@ public class ConnectionFinderSearchResultProcessorTest {
 
   @Mock
   StorageService storageService;
+  @Mock
+  BasicUserInfoService basicUserInfoService;
 
   @Mock
   EntityDao<ContactConnection> dao;
@@ -81,17 +81,8 @@ public class ConnectionFinderSearchResultProcessorTest {
   public void test() throws Exception {
     ConnectionFinderSearchResultProcessor processor = new ConnectionFinderSearchResultProcessor();
     processor.searchServiceFactory = searchServiceFactory;
-    processor.basicUserInfoService = new BasicUserInfoServiceImpl() {
-        public BasicUserInfoServiceImpl setup() {
-          countProvider = Mockito.mock(CountProvider.class);
-          repository = Mockito.mock(Repository.class);
-          return this;
-        }
-    }.setup();
-    processor.storageService = storageService;
-    
-    when(storageService.getDao(ContactConnection.class)).thenReturn(dao);
-    
+    processor.basicUserInfoService = basicUserInfoService;
+
     Object hybridSession = mock(javax.jcr.Session.class, withSettings()
         .extraInterfaces(SessionAdaptable.class));
 
@@ -110,13 +101,14 @@ public class ConnectionFinderSearchResultProcessorTest {
 
     Authorizable auBob = mock(Authorizable.class);
     when(auBob.getId()).thenReturn("bob");
-    HashMap<String, Object> auProps = new HashMap<String, Object>();
-    auProps.put("lastName", "The Builder");
-    
-    when(auBob.hasProperty("lastName")).thenReturn(true);
-    when(auBob.getProperty("lastName")).thenReturn("The Builder");
-    when(auBob.getSafeProperties()).thenReturn(auProps);
-    
+    when(basicUserInfoService.getProperties(auBob)).thenReturn(ImmutableMap.<String, Object>of(
+        UserConstants.USER_BASIC, ImmutableMap.of(
+          "elements", ImmutableMap.of(
+            "lastName", ImmutableMap.of("value", "The Builder")
+          )
+        )
+    ));
+
     when(am.findAuthorizable("alice")).thenReturn(auAlice);
     when(am.findAuthorizable("bob")).thenReturn(auBob);
 

@@ -52,6 +52,10 @@
   <dependencies>
     <!-- provided -->
     <dependency>
+        <groupId>org.sakaiproject.nakamura</groupId>
+        <artifactId>org.sakaiproject.nakamura.core</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.utils</artifactId>
       <version>1.4.0-SNAPSHOT</version>
@@ -117,6 +121,10 @@
       <groupId>org.apache.felix</groupId>
       <artifactId>org.osgi.compendium</artifactId>
     </dependency>
+    <dependency>
+	    <groupId>org.apache.felix</groupId>
+    	<artifactId>org.apache.felix.scr.annotations</artifactId>
+    </dependency>
     <!-- logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -178,12 +186,6 @@
     	<artifactId>org.sakaiproject.nakamura.profile.api</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     	<scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.user.impl</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

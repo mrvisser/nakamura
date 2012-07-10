@@ -74,7 +74,7 @@
         <bundle>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.auth.core</artifactId>
-            <version>1.0.6</version>
+            <version>1.0.7</version>
         </bundle>
         <bundle>
             <groupId>org.apache.sling</groupId>
@@ -379,22 +379,21 @@ KERN-1187
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
     <bundle>
-      <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.lucene-core-osgi</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <groupId>org.apache.servicemix.bundles</groupId>
+      <artifactId>org.apache.servicemix.bundles.lucene</artifactId>
+      <version>3.5.0_1</version>
     </bundle>
 
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.core</artifactId>
-      <version>1.3.5-SNAPSHOT</version>
+      <version>1.3.6-SNAPSHOT</version>
     </bundle>
     <bundle>
       <groupId>com.googlecode.guava-osgi</groupId>
       <artifactId>guava-osgi</artifactId>
       <version>10.0.0</version>
     </bundle>
-    
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>javax.activation-mail</artifactId>
@@ -571,11 +570,6 @@ KERN-1187
     </bundle>
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.chat</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
-    </bundle>
-    <bundle>
-      <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.discussion</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
@@ -680,11 +674,6 @@ KERN-1187
     </bundle>
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.calendar</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
-    </bundle>
-    <bundle>
-      <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.authz</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
@@ -720,7 +709,12 @@ KERN-1187
     </bundle>
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
-      <artifactId>org.sakaiproject.nakamura.http</artifactId>
+      <artifactId>org.sakaiproject.nakamura.http.api</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.http.impl</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
     <bundle>
@@ -746,6 +740,11 @@ KERN-1187
     <bundle>
       <groupId>org.sakaiproject.nakamura</groupId>
       <artifactId>org.sakaiproject.nakamura.content-packaging</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+    </bundle>
+    <bundle>
+      <groupId>org.sakaiproject.nakamura</groupId>
+      <artifactId>org.sakaiproject.nakamura.robots.txt</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </bundle>
    </startLevel>
