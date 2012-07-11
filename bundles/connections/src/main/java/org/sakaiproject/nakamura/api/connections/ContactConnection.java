@@ -20,7 +20,6 @@ package org.sakaiproject.nakamura.api.connections;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import org.apache.solr.client.solrj.beans.Field;
 import org.sakaiproject.nakamura.api.storage.Entity;
 
 import java.util.Map;
@@ -47,18 +46,26 @@ public class ContactConnection implements Entity {
   private String key = null;
   
   @Index
+  @Persistent
   private ConnectionState connectionState = ConnectionState.NONE;
   
+  @Persistent
   private Set<String> connectionTypes = Sets.newHashSet();
   
   @Serialized
   private Map<String,Object> properties = Maps.newHashMap();
   
   @Index
+  @Persistent
   private String fromUserId = "";
   
+  @Persistent
   private String toUserId = "";
+  
+  @Persistent
   private String firstName = "";
+  
+  @Persistent
   private String lastName = "";
 
   public ContactConnection() {
@@ -89,8 +96,7 @@ public class ContactConnection implements Entity {
   public String getKey() {
     return this.key;
   }
-  
-  @Field
+
   public ConnectionState getConnectionState() {
     return connectionState;
   }
@@ -100,7 +106,7 @@ public class ContactConnection implements Entity {
   }
 
   public void addProperties(Map<String, Object> additionalProperties) {
-    this.properties.putAll(additionalProperties);
+    this.getProperties().putAll(additionalProperties);
   }
 
   public void setConnectionState(ConnectionState connectionState) {
@@ -115,7 +121,6 @@ public class ContactConnection implements Entity {
     return properties;
   }
 
-  @Field
   public String getFromUserId() {
     return fromUserId;
   }
@@ -133,7 +138,7 @@ public class ContactConnection implements Entity {
   }
 
   public Object getProperty(String propertyName) {
-    return properties.get(propertyName);
+    return getProperties().get(propertyName);
   }
 
 }

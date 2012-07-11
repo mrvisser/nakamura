@@ -50,6 +50,7 @@ public class InMemoryPersistenceManagerFactory extends
     props.put("datanucleus.validateColumns", "true");
     props.put("datanucleus.validateConstraints", "true");
     props.put("datanucleus.rdbms.CheckExistTablesOrViews", "true");
+    props.put("datanucleus.Optimistic", "true");
     
     this.pmf = JDOPersistenceManagerFactory.getPersistenceManagerFactory(props);
   }

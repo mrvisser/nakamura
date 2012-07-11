@@ -63,8 +63,8 @@ import javax.jdo.Transaction;
 public class KeyEntityConnectionStorage implements ConnectionStorage {
 
   private final static String
-      QUERY_BY_KEY            = "select unique from ContactConnection where key == :keyParam",
-      QUERY_BY_STATE_AND_USER = "select from ContactConnection where connectionState == :connectionState && fromUserId == :fromUserId";
+      QUERY_BY_KEY            = "select unique from "+ContactConnection.class.getCanonicalName()+" where key == :keyParam",
+      QUERY_BY_STATE_AND_USER = "select from "+ContactConnection.class.getCanonicalName()+" where connectionState == :connectionState && fromUserId == :fromUserId";
   
   @Reference
   protected Repository repository;
@@ -94,6 +94,7 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
     Transaction tx = pm.currentTransaction();
     Session session = null;
     try {
+      tx.begin();
       session = repository.loginAdministrative();
       ContactConnection connection = (ContactConnection) pm.newQuery(
           QUERY_BY_KEY).execute(nodePath);
@@ -118,6 +119,7 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
         connection = makeContactConnection(fromUser, toUser, new Content(nodePath, props));
         
         pm.makePersistent(connection);
+        connection = pm.detachCopy(connection);
         
         Event event = ConnectionEventUtil.createCreateConnectionEvent(connection);
         eventAdmin.sendEvent(event);
@@ -160,13 +162,18 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
     PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     Transaction tx = pm.currentTransaction();
     try {
-      
+      tx.begin();
       Query jdoQuery = pm.newQuery(QUERY_BY_KEY);
       ContactConnection oldThisNode = (ContactConnection) jdoQuery.execute(thisNode.getKey());
       ContactConnection oldOtherNode = (ContactConnection) jdoQuery.execute(otherNode.getKey());
       
       pm.makePersistent(thisNode);
       pm.makePersistent(otherNode);
+      
+      thisNode = pm.detachCopy(thisNode);
+      otherNode = pm.detachCopy(otherNode);
+      
+      tx.commit();
       
       Event event = null;
       if (oldThisNode == null) {
@@ -184,10 +191,7 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
       }
       
       eventAdmin.postEvent(event);
-      
-      tx.commit();
-      pm.close();
-      
+
     } catch (Exception e) {
       throw new ConnectionException(500, e);
     } finally {
@@ -202,7 +206,8 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
     PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     try {
       String contentPath = ConnectionUtils.getConnectionPath(thisUser, otherUser, null);
-      return (ContactConnection) pm.newQuery(QUERY_BY_KEY).execute(contentPath);
+      ContactConnection contactConnection = (ContactConnection) pm.newQuery(QUERY_BY_KEY).execute(contentPath); 
+      return contactConnection;
     } finally {
       pm.close();
     }

@@ -30,6 +30,10 @@
         <artifactId>maven-scr-plugin</artifactId>
       </plugin>
       <plugin>
+      	<groupId>org.datanucleus</groupId>
+      	<artifactId>maven-datanucleus-plugin</artifactId>
+      </plugin>
+      <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
@@ -88,6 +92,10 @@
     <dependency>
       <groupId>javax.jdo</groupId>
       <artifactId>jdo-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.datanucleus</groupId>
+      <artifactId>datanucleus-api-jdo</artifactId>
     </dependency>
     
     <dependency>
@@ -170,11 +178,6 @@
     <dependency>
       <groupId>org.datanucleus</groupId>
       <artifactId>datanucleus-core</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.datanucleus</groupId>
-      <artifactId>datanucleus-api-jdo</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
