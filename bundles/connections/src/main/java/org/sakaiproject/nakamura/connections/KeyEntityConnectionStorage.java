@@ -25,12 +25,6 @@ import com.google.common.collect.Sets;
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.connections.ConnectionConstants;
@@ -39,7 +33,6 @@ import org.sakaiproject.nakamura.api.connections.ConnectionException;
 import org.sakaiproject.nakamura.api.connections.ConnectionState;
 import org.sakaiproject.nakamura.api.connections.ConnectionStorage;
 import org.sakaiproject.nakamura.api.connections.ContactConnection;
-import org.sakaiproject.nakamura.api.lite.ClientPoolException;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
 import org.sakaiproject.nakamura.api.lite.StorageClientException;
@@ -49,13 +42,17 @@ import org.sakaiproject.nakamura.api.lite.accesscontrol.Permissions;
 import org.sakaiproject.nakamura.api.lite.accesscontrol.Security;
 import org.sakaiproject.nakamura.api.lite.authorizable.Authorizable;
 import org.sakaiproject.nakamura.api.lite.content.Content;
-import org.sakaiproject.nakamura.api.storage.EntityDao;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
+import org.sakaiproject.nakamura.util.SparseUtils;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
+import javax.jdo.Transaction;
 
 
 /**
@@ -65,24 +62,41 @@ import java.util.Set;
 @Component
 public class KeyEntityConnectionStorage implements ConnectionStorage {
 
+  private final static String
+      QUERY_BY_KEY            = "select unique from ContactConnection where key == :keyParam",
+      QUERY_BY_STATE_AND_USER = "select from ContactConnection where connectionState == :connectionState && fromUserId == :fromUserId";
+  
   @Reference
   protected Repository repository;
 
   @Reference
-  protected StorageService storage;
+  protected PersistenceManagerFactory persistenceManagerFactory;
   
   @Reference
   protected EventAdmin eventAdmin;
   
+  public KeyEntityConnectionStorage() {
+    
+  }
+  
+  public KeyEntityConnectionStorage(Repository repository,
+      PersistenceManagerFactory persistenceManagerFactory, EventAdmin eventAdmin) {
+    this.repository = repository;
+    this.persistenceManagerFactory = persistenceManagerFactory;
+    this.eventAdmin = eventAdmin;
+  }
+
   @Override
   public ContactConnection getOrCreateContactConnection(Authorizable fromUser, Authorizable toUser)
       throws ConnectionException {
     String nodePath = ConnectionUtils.getConnectionPath(fromUser, toUser);
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    Transaction tx = pm.currentTransaction();
     Session session = null;
-    EntityDao<ContactConnection> dao = createDao();
     try {
       session = repository.loginAdministrative();
-      ContactConnection connection = dao.get(nodePath);
+      ContactConnection connection = (ContactConnection) pm.newQuery(
+          QUERY_BY_KEY).execute(nodePath);
       if (connection == null) {
         // Add auth name for sorting (KERN-1924)
         String firstName = "";
@@ -103,22 +117,22 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
         
         connection = makeContactConnection(fromUser, toUser, new Content(nodePath, props));
         
-        dao.update(connection);
+        pm.makePersistent(connection);
         
         Event event = ConnectionEventUtil.createCreateConnectionEvent(connection);
         eventAdmin.sendEvent(event);
       }
+      
+      tx.commit();
+      session.logout();
       return connection;
     } catch (Exception e) {
       throw new ConnectionException(500, e);
     } finally {
-      if (session != null) {
-        try {
-          session.logout();
-        } catch (ClientPoolException e) {
-          throw new ConnectionException(500, e);
-        }
-      }
+      SparseUtils.logoutQuietly(session);
+      if (tx.isActive())
+        tx.rollback();
+      pm.close();
     }
   }
 
@@ -143,30 +157,56 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
   @Override
   public void saveContactConnectionPair(ContactConnection thisNode, ContactConnection otherNode)
       throws ConnectionException {
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    Transaction tx = pm.currentTransaction();
     try {
-      EntityDao<ContactConnection> dao = storage.getDao(ContactConnection.class);
       
-      ContactConnection oldThisNode = dao.get(thisNode.getKey());
-      ContactConnection oldOtherNode = dao.get(otherNode.getKey());
+      Query jdoQuery = pm.newQuery(QUERY_BY_KEY);
+      ContactConnection oldThisNode = (ContactConnection) jdoQuery.execute(thisNode.getKey());
+      ContactConnection oldOtherNode = (ContactConnection) jdoQuery.execute(otherNode.getKey());
       
-      dao.update(thisNode);
-      dao.update(otherNode);
+      pm.makePersistent(thisNode);
+      pm.makePersistent(otherNode);
       
-      Event event = ConnectionEventUtil.createUpdateConnectionEvent(oldThisNode, thisNode);
+      Event event = null;
+      if (oldThisNode == null) {
+        event = ConnectionEventUtil.createCreateConnectionEvent(thisNode); 
+      } else {
+        event = ConnectionEventUtil.createUpdateConnectionEvent(oldThisNode, thisNode);
+      }
+      
       eventAdmin.postEvent(event);
       
-      event = ConnectionEventUtil.createUpdateConnectionEvent(oldOtherNode, otherNode);
+      if (oldOtherNode == null) {
+        event = ConnectionEventUtil.createCreateConnectionEvent(otherNode);
+      } else {
+        event = ConnectionEventUtil.createUpdateConnectionEvent(oldOtherNode, otherNode);
+      }
+      
       eventAdmin.postEvent(event);
+      
+      tx.commit();
+      pm.close();
       
     } catch (Exception e) {
       throw new ConnectionException(500, e);
+    } finally {
+      if (tx.isActive())
+        tx.rollback();
+      pm.close();
     }
   }
 
   @Override
   public ContactConnection getContactConnection(Authorizable thisUser, Authorizable otherUser) throws ConnectionException {
-    String contentPath = ConnectionUtils.getConnectionPath(thisUser, otherUser, null);
-    return createDao().get(contentPath);
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    try {
+      String contentPath = ConnectionUtils.getConnectionPath(thisUser, otherUser, null);
+      return (ContactConnection) pm.newQuery(QUERY_BY_KEY).execute(contentPath);
+    } finally {
+      pm.close();
+    }
+    
   }
 
   /**
@@ -177,17 +217,16 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
   public List<String> getConnectedUsers(Session session, String userId, ConnectionState state) throws ConnectionException {
     checkCanReadConnections(session, userId);
     List<String> usernames = Lists.newArrayList();
-    EntityDao<ContactConnection> dao = storage.getDao(ContactConnection.class);
-    
-    // search by connection state and from user id
-    BooleanQuery query = new BooleanQuery();
-    query.add(new BooleanClause(simpleTermQuery("connectionState", state.toString()), Occur.MUST));
-    query.add(new BooleanClause(simpleTermQuery("fromUserId", userId), Occur.MUST));
-    
-    List<ContactConnection> connections = dao.findAll(query);
-    for (ContactConnection connection : connections) {
-      usernames.add(connection.getToUserId());
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
+    try {
+      List<ContactConnection> connections = (List<ContactConnection>) pm.newQuery(QUERY_BY_STATE_AND_USER).execute(state.toString(), userId);
+      for(ContactConnection connection : connections) {
+        usernames.add(connection.getToUserId());
+      }
+    } finally {
+      pm.close();
     }
+    
     return usernames;
   }
   
@@ -209,12 +248,5 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
           + userId, e);
     }
   }
-  
-  private Query simpleTermQuery(String field, String value) {
-    return new TermQuery(new Term(field, value));
-  }
-  
-  private EntityDao<ContactConnection> createDao() {
-    return storage.getDao(ContactConnection.class);
-  }
+
 }

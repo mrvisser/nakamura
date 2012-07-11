@@ -45,14 +45,18 @@ import org.sakaiproject.nakamura.api.lite.content.Content;
 import org.sakaiproject.nakamura.api.lite.content.ContentManager;
 import org.sakaiproject.nakamura.api.search.solr.Result;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
-import org.sakaiproject.nakamura.api.storage.EntityDao;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.user.UserConstants;
+import org.sakaiproject.nakamura.api.user.counts.CountProvider;
+import org.sakaiproject.nakamura.user.BasicUserInfoServiceImpl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 
 /**
  *
@@ -69,20 +73,27 @@ public class ConnectionFinderSearchResultProcessorTest {
   @Mock
   ContentManager cm;
 
-  @Mock
-  StorageService storageService;
-  @Mock
-  BasicUserInfoService basicUserInfoService;
-
-  @Mock
-  EntityDao<ContactConnection> dao;
-  
   @Test
   public void test() throws Exception {
     ConnectionFinderSearchResultProcessor processor = new ConnectionFinderSearchResultProcessor();
     processor.searchServiceFactory = searchServiceFactory;
-    processor.basicUserInfoService = basicUserInfoService;
-
+    processor.basicUserInfoService = new BasicUserInfoServiceImpl() {
+        public BasicUserInfoServiceImpl setup() {
+          countProvider = Mockito.mock(CountProvider.class);
+          repository = Mockito.mock(Repository.class);
+          return this;
+        }
+    }.setup();
+    
+    PersistenceManagerFactory pmf = mock(PersistenceManagerFactory.class);
+    PersistenceManager pm = mock(PersistenceManager.class);
+    Query query = mock(Query.class);
+    
+    when(pmf.getPersistenceManager()).thenReturn(pm);
+    when(pm.newQuery("select unique from ContactConnection where key == :key")).thenReturn(query);
+    
+    processor.persistenceManagerFactory = pmf;
+    
     Object hybridSession = mock(javax.jcr.Session.class, withSettings()
         .extraInterfaces(SessionAdaptable.class));
 
@@ -101,14 +112,13 @@ public class ConnectionFinderSearchResultProcessorTest {
 
     Authorizable auBob = mock(Authorizable.class);
     when(auBob.getId()).thenReturn("bob");
-    when(basicUserInfoService.getProperties(auBob)).thenReturn(ImmutableMap.<String, Object>of(
-        UserConstants.USER_BASIC, ImmutableMap.of(
-          "elements", ImmutableMap.of(
-            "lastName", ImmutableMap.of("value", "The Builder")
-          )
-        )
-    ));
-
+    HashMap<String, Object> auProps = new HashMap<String, Object>();
+    auProps.put("lastName", "The Builder");
+    
+    when(auBob.hasProperty("lastName")).thenReturn(true);
+    when(auBob.getProperty("lastName")).thenReturn("The Builder");
+    when(auBob.getSafeProperties()).thenReturn(auProps);
+    
     when(am.findAuthorizable("alice")).thenReturn(auAlice);
     when(am.findAuthorizable("bob")).thenReturn(auBob);
 
@@ -127,7 +137,7 @@ public class ConnectionFinderSearchResultProcessorTest {
     
     ContactConnection connection = new ContactConnection("a:alice/contacts/bob", ConnectionState.ACCEPTED,
         new HashSet<String>(), "alice", "bob", "Alice", "Cooper", new HashMap<String, Object>()); 
-    when(dao.get("a:alice/contacts/bob")).thenReturn(connection);
+    when(query.execute("a:alice/contacts/bob")).thenReturn(connection);
 
     RequestPathInfo pathInfo = mock(RequestPathInfo.class);
     when(request.getRequestPathInfo()).thenReturn(pathInfo);

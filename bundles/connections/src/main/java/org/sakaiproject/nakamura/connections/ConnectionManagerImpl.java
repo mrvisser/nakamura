@@ -199,7 +199,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
     // fail if the supplied users are invalid
     Authorizable thisAu = checkValidUserId(session, thisUserId);
     Authorizable otherAu = checkValidUserId(session, otherUserId);
-
+ 
     Session adminSession = null;
     try {
       adminSession = repository.loginAdministrative();

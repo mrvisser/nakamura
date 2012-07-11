@@ -20,28 +20,51 @@ package org.sakaiproject.nakamura.api.connections;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import org.apache.lucene.analysis.KeywordAnalyzer;
-import org.hibernate.search.annotations.Analyzer;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.ProvidedId;
+import org.apache.solr.client.solrj.beans.Field;
 import org.sakaiproject.nakamura.api.storage.Entity;
 
 import java.util.Map;
 import java.util.Set;
 
-@Indexed @ProvidedId
-@Analyzer(impl=KeywordAnalyzer.class)
+import javax.jdo.annotations.IdGeneratorStrategy;
+import javax.jdo.annotations.Index;
+import javax.jdo.annotations.NullValue;
+import javax.jdo.annotations.PersistenceCapable;
+import javax.jdo.annotations.Persistent;
+import javax.jdo.annotations.PrimaryKey;
+import javax.jdo.annotations.Serialized;
+import javax.jdo.annotations.Unique;
+
+@PersistenceCapable
 public class ContactConnection implements Entity {
+  
+  @PrimaryKey
+  @Persistent(valueStrategy=IdGeneratorStrategy.INCREMENT)
+  private Long id;
+  
+  @Unique
+  @Persistent(nullValue=NullValue.EXCEPTION)
   private String key = null;
+  
+  @Index
   private ConnectionState connectionState = ConnectionState.NONE;
+  
   private Set<String> connectionTypes = Sets.newHashSet();
+  
+  @Serialized
   private Map<String,Object> properties = Maps.newHashMap();
+  
+  @Index
   private String fromUserId = "";
+  
   private String toUserId = "";
   private String firstName = "";
   private String lastName = "";
 
+  public ContactConnection() {
+    
+  }
+  
   public ContactConnection(String key, ConnectionState connectionState, Set<String> connectionTypes,
                            String fromUserId,
                            String toUserId,
@@ -58,10 +81,10 @@ public class ContactConnection implements Entity {
     if (additionalProperties != null) this.properties = additionalProperties;
   }
 
-  /**
-   * {@inheritDoc}
-   * @see org.sakaiproject.nakamura.api.storage.Entity#getKey()
-   */
+  public Long getId() {
+    return id;
+  }
+  
   @Override
   public String getKey() {
     return this.key;

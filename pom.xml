@@ -114,8 +114,12 @@
         <module>bundles/lom</module>
         <module>bundles/content-packaging</module>
         <module>bundles/postgresqlwrapper</module>
+		<module>bundles/classloader</module>
+        <module>bundles/javax.jdo.jdo-api</module>
+        <module>bundles/jdo</module>
         <module>bundles/solr</module>
         <module>bundles/robots.txt</module>
+        <module>contrib/storage</module>
         <module>testscripts</module>
       </modules>
     </profile>
@@ -819,6 +823,11 @@
 <!-- ====================================================================== -->
   <repositories>
     <repository>
+      <id>datanucleus</id>
+      <name>Data Nucleus</name>
+      <url>http://www.datanucleus.org/downloads/maven2/</url>
+    </repository>
+    <repository>
       <id>maven repo</id>
       <name>maven repo</name>
       <url>http://repo1.maven.org/maven2/</url>
@@ -921,6 +930,10 @@
   </repositories>
   <pluginRepositories>
     <pluginRepository>
+       <id>DataNucleus</id>
+       <url>http://www.datanucleus.org/downloads/maven2/</url>
+    </pluginRepository>
+    <pluginRepository>
       <id>apache-plugin-snapshot</id>
       <name>Apache Snapshots Plugins</name>
       <releases>
@@ -1005,6 +1018,44 @@
         <version>1.6.0</version>
         <scope>provided</scope>
       </dependency>
+
+       <dependency>
+         <groupId>javax.jdo</groupId>
+         <artifactId>jdo-api</artifactId>
+         <version>3.1-SNAPSHOT-20120609</version>
+         <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-core</artifactId>
+        <version>3.0.11</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-api-jdo</artifactId>
+        <version>3.0.8</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.datanucleus</groupId>
+        <artifactId>datanucleus-rdbms</artifactId>
+        <version>3.0.10</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.sakaiproject.nakamura</groupId>
+        <artifactId>org.sakaiproject.nakamura.jdo</artifactId>
+        <version>0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.sakaiproject.nakamura</groupId>
+        <artifactId>org.sakaiproject.nakamura.classloader</artifactId>
+        <version>0.1-SNAPSHOT</version>
+        <scope>provided</scope>
+      </dependency>
+
 
 <!-- testing libraries -->
       <dependency>
@@ -1281,6 +1332,12 @@
         <version>1.5</version>
         <scope>provided</scope>
       </dependency>
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.4</version>
+        <scope>provided</scope>
+      </dependency> 
 
 <!-- Pax Web -->
       <dependency>

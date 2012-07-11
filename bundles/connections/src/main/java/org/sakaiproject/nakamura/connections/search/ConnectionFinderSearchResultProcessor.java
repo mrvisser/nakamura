@@ -41,13 +41,15 @@ import org.sakaiproject.nakamura.api.search.solr.SolrSearchException;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultProcessor;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchResultSet;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.api.user.BasicUserInfoService;
 import org.sakaiproject.nakamura.connections.ConnectionUtils;
 import org.sakaiproject.nakamura.util.ExtendedJSONWriter;
 import org.sakaiproject.nakamura.util.LitePersonalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 
 /**
  * Formats connection search results. We get profile nodes from the query and make a
@@ -69,7 +71,7 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
   BasicUserInfoService basicUserInfoService;
 
   @Reference
-  StorageService storageService;
+  PersistenceManagerFactory persistenceManagerFactory;
   
   public void writeResult(SlingHttpServletRequest request, JSONWriter writer, Result result)
       throws JSONException {
@@ -80,12 +82,14 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
 
     javax.jcr.Session jcrSession = request.getResourceResolver().adaptTo(javax.jcr.Session.class);
     Session session = StorageClientUtils.adaptToSession(jcrSession);
+    PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     try {
       AuthorizableManager authMgr = session.getAuthorizableManager();
       Authorizable auth = authMgr.findAuthorizable(contactUser);
       String contactContentPath = result.getPath();
       logger.debug("getting " + contactContentPath);
-      ContactConnection connection = storageService.getDao(ContactConnection.class).get(contactContentPath);
+      ContactConnection connection = (ContactConnection) pm.newQuery("select unique from ContactConnection " +
+          "where key == :key").execute(contactContentPath);
       if (connection != null) {
         writer.object();
         writer.key("target");
@@ -111,6 +115,8 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
       throw new RuntimeException(e.getMessage(), e);
     } catch (AccessDeniedException ignored) {
       // user can't read the contact's profile, that's ok, just skip
+    } finally {
+      pm.close();
     }
   }
   /**
