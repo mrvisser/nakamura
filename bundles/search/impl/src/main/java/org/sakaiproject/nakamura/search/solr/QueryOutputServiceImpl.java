@@ -37,7 +37,6 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.osgi.framework.Constants;
-import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.sakaiproject.nakamura.api.lite.Repository;
 import org.sakaiproject.nakamura.api.lite.Session;
@@ -50,10 +49,8 @@ import org.sakaiproject.nakamura.api.search.solr.QueryOutputService;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchException;
 import org.sakaiproject.nakamura.api.search.solr.SolrSearchServiceFactory;
 import org.sakaiproject.nakamura.api.solr.SolrServerService;
-import org.sakaiproject.nakamura.api.storage.CloseableIterator;
-import org.sakaiproject.nakamura.api.storage.Entity;
+import org.sakaiproject.nakamura.api.storage.PersistentClassTracker;
 import org.sakaiproject.nakamura.api.storage.StorageEventUtil;
-import org.sakaiproject.nakamura.api.storage.StorageService;
 import org.sakaiproject.nakamura.util.JcrUtils;
 import org.sakaiproject.nakamura.util.NodeInputStream;
 import org.slf4j.Logger;
@@ -67,6 +64,8 @@ import java.util.Set;
 
 import javax.jcr.Node;
 import javax.jcr.RepositoryException;
+import javax.jdo.PersistenceManager;
+import javax.jdo.PersistenceManagerFactory;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 
@@ -100,7 +99,10 @@ public class QueryOutputServiceImpl implements QueryOutputService {
   private EventAdmin eventAdmin;
   
   @Reference
-  private StorageService storageService;
+  private PersistenceManagerFactory persistenceManagerFactory;
+  
+  @Reference
+  private PersistentClassTracker persistentClassTracker;
   
   private Set<String> IGNORE_PARAMS = ImmutableSet.of("q", "addReaders", "asAnon", "indent");
 
@@ -422,14 +424,16 @@ public class QueryOutputServiceImpl implements QueryOutputService {
    */
   private void indexContent(Writer w) throws AccessDeniedException,
       StorageClientException, IOException {
+    PersistenceManager persistenceManager = persistenceManagerFactory.getPersistenceManager();
     Session session = null;
     try {
       session = repo.loginAdministrative();
       ContentManager contentMgr = session.getContentManager();
       contentMgr.triggerRefreshAll();
-      StorageEventUtil.refreshAllEntities(storageService, eventAdmin, "admin", true);
+      StorageEventUtil.refreshAllEntities(persistentClassTracker, persistenceManager, eventAdmin, "admin", true);
       writeStatus(w, "Reindexing of all content triggered. Please watch the logs for progress.");
     } finally {
+      persistenceManager.close();
       if (session != null) {
         session.logout();
       }

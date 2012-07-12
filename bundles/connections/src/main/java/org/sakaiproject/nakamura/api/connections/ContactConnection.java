@@ -31,10 +31,9 @@ import javax.jdo.annotations.NullValue;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.PrimaryKey;
-import javax.jdo.annotations.Serialized;
 import javax.jdo.annotations.Unique;
 
-@PersistenceCapable
+@PersistenceCapable(detachable="true")
 public class ContactConnection implements Entity {
   
   @PrimaryKey
@@ -46,14 +45,14 @@ public class ContactConnection implements Entity {
   private String key = null;
   
   @Index
-  @Persistent
+  @Persistent(defaultFetchGroup="true")
   private ConnectionState connectionState = ConnectionState.NONE;
   
-  @Persistent
+  @Persistent(defaultFetchGroup="true")
   private Set<String> connectionTypes = Sets.newHashSet();
   
-  @Serialized
-  private Map<String,Object> properties = Maps.newHashMap();
+  @Persistent(serialized="true", defaultFetchGroup="true")
+  private Map<String,Object> properties = Maps.<String, Object>newHashMap();
   
   @Index
   @Persistent

@@ -23,7 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+
+import javax.jdo.FetchPlan;
+import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 /**
  * Constants for handling storage events. Note that events like CREATE / UPDATE / DELETE
@@ -69,7 +75,7 @@ public class StorageEventUtil {
     return new Event(topic, properties);
   }
   
-  public static final void refreshAllEntities(StorageService storageService,
+  public static final void refreshAllEntities(PersistentClassTracker tracker, PersistenceManager persistenceManager,
       EventAdmin eventAdmin, String actorUserId, boolean async) {
     
     if (async) {
@@ -80,20 +86,28 @@ public class StorageEventUtil {
     
     long count = 0;
     
-    CloseableIterator<Entity> entities = storageService.findAll();
-    while (entities.hasNext()) {
-      Entity entity = entities.next();
-      Event event = StorageEventUtil.createStorageEvent(StorageEventUtil.TOPIC_REFRESH_DEFAULT,
-          "admin", entity, null);
+    for (Class<? extends Entity> entityClass : tracker.listAll()) {
+      Query q = persistenceManager.newQuery(entityClass);
+      FetchPlan fetchPlan = q.getFetchPlan();
+      fetchPlan.setFetchSize(FetchPlan.FETCH_SIZE_GREEDY);
       
-      // fire the event
-      if (async) {
-        eventAdmin.postEvent(event);
-      } else {
-        eventAdmin.sendEvent(event);
+      @SuppressWarnings("unchecked")
+      Iterator<Entity> entities = ((List<Entity>) q.execute()).iterator();
+      
+      while (entities.hasNext()) {
+        Entity entity = entities.next();
+        Event event = StorageEventUtil.createStorageEvent(StorageEventUtil.TOPIC_REFRESH_DEFAULT,
+            "admin", entity, null);
+        
+        // fire the event
+        if (async) {
+          eventAdmin.postEvent(event);
+        } else {
+          eventAdmin.sendEvent(event);
+        }
+        
+        count++;
       }
-      
-      count++;
     }
     
     if (async) {

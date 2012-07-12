@@ -15,30 +15,37 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package org.sakaiproject.nakamura.impl.storage.infinispan;
+package org.sakaiproject.nakamura.connections;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
-import org.sakaiproject.nakamura.api.storage.CloseableIterator;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Service;
+import org.sakaiproject.nakamura.api.connections.ContactConnection;
 import org.sakaiproject.nakamura.api.storage.Entity;
+import org.sakaiproject.nakamura.api.storage.PersistentClassProvider;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  */
-public class StorageServiceImplTest {
+@Component
+@Service
+public class ConnectionsPersistentClassProvider implements PersistentClassProvider {
 
-  @Test
-  public void testFindAll() {
-    StorageServiceImpl service = new StorageServiceImpl();
-    service.getDao(GenericEntity.class).update(new GenericEntity("key", "prop1"));
-    CloseableIterator<Entity> allEntities = service.findAll();
-    Entity found = allEntities.next();
-    
-    Assert.assertFalse(allEntities.hasNext());
-    Assert.assertNotNull(found);
-    Assert.assertTrue(found instanceof GenericEntity);
-    Assert.assertEquals("key", ((GenericEntity)found).getKey());
-    Assert.assertEquals("prop1", ((GenericEntity)found).getProp1());
+  private static final List<Class<? extends Entity>> classes;
+  static {
+    classes = new ArrayList<Class<? extends Entity>>();
+    classes.add(ContactConnection.class);
   }
+  
+  /**
+   * {@inheritDoc}
+   * @see org.sakaiproject.nakamura.api.storage.PersistentClassProvider#listAll()
+   */
+  @Override
+  public List<Class<? extends Entity>> listAll() {
+    return new ArrayList<Class<? extends Entity>>(classes);
+  }
+
 }

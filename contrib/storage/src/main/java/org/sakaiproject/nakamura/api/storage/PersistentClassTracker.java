@@ -17,12 +17,13 @@
  */
 package org.sakaiproject.nakamura.api.storage;
 
-import java.io.Closeable;
-import java.util.Iterator;
+import java.util.List;
 
 /**
  *
  */
-public interface CloseableIterator<T> extends Iterator<T>, Closeable {
+public interface PersistentClassTracker {
 
+  List<Class<? extends Entity>> listAll();
+  
 }

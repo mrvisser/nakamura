@@ -88,8 +88,8 @@ public class ConnectionFinderSearchResultProcessor implements SolrSearchResultPr
       Authorizable auth = authMgr.findAuthorizable(contactUser);
       String contactContentPath = result.getPath();
       logger.debug("getting " + contactContentPath);
-      ContactConnection connection = (ContactConnection) pm.newQuery("select unique from ContactConnection " +
-          "where key == :key").execute(contactContentPath);
+      ContactConnection connection = (ContactConnection) pm.newQuery("select unique from "+ContactConnection.class.getCanonicalName() +
+          " where key == :key").execute(contactContentPath);
       if (connection != null) {
         writer.object();
         writer.key("target");

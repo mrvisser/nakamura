@@ -58,6 +58,10 @@
       <artifactId>jcr</artifactId>
     </dependency>
     <dependency>
+      <groupId>javax.jdo</groupId>
+      <artifactId>jdo-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
@@ -130,7 +134,7 @@
     <dependency>
     	<groupId>org.sakaiproject.nakamura</groupId>
     	<artifactId>org.sakaiproject.nakamura.storage</artifactId>
-    	<version>1.3-snapshot</version>
+    	<version>1.4.0-SNAPSHOT</version>
     	<scope>provided</scope>
     </dependency>
     <dependency>

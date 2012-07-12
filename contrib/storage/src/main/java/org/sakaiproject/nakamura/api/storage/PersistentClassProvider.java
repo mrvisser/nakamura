@@ -17,27 +17,12 @@
  */
 package org.sakaiproject.nakamura.api.storage;
 
+import java.util.List;
+
 /**
  *
  */
-public interface StorageService {
+public interface PersistentClassProvider {
 
-  /**
-   * Get a data-access object responsible for the persistence operations of entities
-   * of the given {@code clazz} type. 
-   * 
-   * @param clazz
-   * @return
-   */
-  <T extends Entity> EntityDao<T> getDao(Class<T> clazz);
-  
-  /**
-   * Iterate through all entities available in all DAO's currently registered with the storage service.
-   * 
-   * <b>Important:</b> The iterator must be closed after iteration is complete.
-   * 
-   * @return
-   */
-  CloseableIterator<Entity> findAll();
-
+  public List<Class<? extends Entity>> listAll();
 }

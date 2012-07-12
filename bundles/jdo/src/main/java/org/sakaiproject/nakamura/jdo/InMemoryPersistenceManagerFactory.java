@@ -44,6 +44,12 @@ public class InMemoryPersistenceManagerFactory extends
     props.put("datanucleus.ConnectionURL", "jdbc:derby:memory:"+dbName+";create=true");
     props.put("datanucleus.ConnectionUserName", "sa");
     props.put("datanucleus.ConnectionPassword", "");
+    
+    /*props.put("datanucleus.ConnectionDriverName", "com.mysql.jdbc.Driver");
+    props.put("datanucleus.ConnectionURL", "jdbc:mysql://localhost:3306/oae?profileSQL=true");
+    props.put("datanucleus.ConnectionUserName", "oae");
+    props.put("datanucleus.ConnectionPassword", "oae");*/
+    
     props.put("datanucleus.storeManagerType", "rdbms");
     props.put("datanucleus.autoCreateSchema", "true");
     props.put("datanucleus.validateTables", "true");

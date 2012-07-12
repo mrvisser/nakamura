@@ -117,14 +117,11 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
             "lastName", lastName);
         
         connection = makeContactConnection(fromUser, toUser, new Content(nodePath, props));
-        
         pm.makePersistent(connection);
-        connection = pm.detachCopy(connection);
-        
         Event event = ConnectionEventUtil.createCreateConnectionEvent(connection);
         eventAdmin.sendEvent(event);
       }
-      
+      connection = pm.detachCopy(connection);
       tx.commit();
       session.logout();
       return connection;
@@ -224,7 +221,9 @@ public class KeyEntityConnectionStorage implements ConnectionStorage {
     List<String> usernames = Lists.newArrayList();
     PersistenceManager pm = persistenceManagerFactory.getPersistenceManager();
     try {
-      List<ContactConnection> connections = (List<ContactConnection>) pm.newQuery(QUERY_BY_STATE_AND_USER).execute(state.toString(), userId);
+      @SuppressWarnings("unchecked")
+      List<ContactConnection> connections = (List<ContactConnection>) pm.newQuery(QUERY_BY_STATE_AND_USER)
+          .execute(state, userId);
       for(ContactConnection connection : connections) {
         usernames.add(connection.getToUserId());
       }

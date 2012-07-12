@@ -8,6 +8,11 @@
             <artifactId>org.sakaiproject.nakamura.classloader</artifactId>
             <version>0.1-SNAPSHOT</version>
         </bundle>
+		<bundle>
+			<groupId>org.sakaiproject.nakamura</groupId>
+			<artifactId>org.sakaiproject.nakamura.mysqljdbc</artifactId>
+			<version>1.4.0-SNAPSHOT</version>
+		</bundle>
 
         <bundle>
             <groupId>commons-io</groupId>
@@ -276,6 +281,12 @@ KERN-1187
                <artifactId>org.apache.servicemix.bundles.commons-dbcp</artifactId>
                <version>1.4_3</version>
         </bundle>
+ 		<bundle>
+ 			<groupId>org.sakaiproject.nakamura</groupId>
+ 			<artifactId>org.sakaiproject.nakamura.jdo</artifactId>
+ 			<version>0.1-SNAPSHOT</version>
+ 		</bundle>
+ 
  
         <bundle>
             <groupId>org.apache.sling</groupId>
@@ -493,7 +504,7 @@ KERN-1187
     <bundle>
     	<groupId>org.sakaiproject.nakamura</groupId>
     	<artifactId>org.sakaiproject.nakamura.storage</artifactId>
-    	<version>1.3-SNAPSHOT</version>
+    	<version>1.4.0-SNAPSHOT</version>
     </bundle>
    </startLevel>
    <startLevel level="5">
