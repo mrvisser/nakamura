@@ -180,18 +180,20 @@ public abstract class LiteAbstractSakaiGroupPostServlet extends
                   ungetSession(adminSession);
               }
             }else{
-              LOGGER.info("Group {} is not Joinable: User {} adding {}  ",new Object[]{group.getId(), session.getUserId(), memberAuthorizable.getId(),});
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Group {} is not Joinable: User {} adding {}  ",new Object[]{group.getId(), session.getUserId(), memberAuthorizable.getId(),});
+              }
               //group is restricted, so use the current user's authorization
               //to add the member to the group:
 
               group.addMember(memberAuthorizable.getId());
-              if ( LOGGER.isInfoEnabled() ) {
-                LOGGER.info("{} Membership now {} {} {}", new Object[]{ group.getId(),Arrays.toString(group.getMembers()), Arrays.toString(group.getMembersAdded()), Arrays.toString(group.getMembersRemoved())});
+              if ( LOGGER.isDebugEnabled() ) {
+                LOGGER.debug("{} Membership now {} {} {}", new Object[]{ group.getId(),Arrays.toString(group.getMembers()), Arrays.toString(group.getMembersAdded()), Arrays.toString(group.getMembersRemoved())});
               }
               toSave.put(group.getId(), group);
               Group gt = (Group) toSave.get(group.getId());
-              if ( LOGGER.isInfoEnabled() ) {
-                LOGGER.info("{} Membership now {} {} {}", new Object[]{ group.getId(),Arrays.toString(gt.getMembers()), Arrays.toString(gt.getMembersAdded()), Arrays.toString(gt.getMembersRemoved())});
+              if ( LOGGER.isDebugEnabled() ) {
+                LOGGER.debug("{} Membership now {} {} {}", new Object[]{ group.getId(),Arrays.toString(gt.getMembers()), Arrays.toString(gt.getMembersAdded()), Arrays.toString(gt.getMembersRemoved())});
               }
               changed = true;
             }
@@ -213,8 +215,8 @@ public abstract class LiteAbstractSakaiGroupPostServlet extends
             peerGroup.removeMember(member.getId());
           }
           toSave.put(peerGroup.getId(), peerGroup);
-          if ( LOGGER.isInfoEnabled() ) {
-            LOGGER.info("{} Just Updated Peer Group Membership now {} {} {}", new Object[]{peerGroup.getId(), Arrays.toString(peerGroup.getMembers()), Arrays.toString(peerGroup.getMembersAdded()), Arrays.toString(peerGroup.getMembersRemoved())});
+          if ( LOGGER.isDebugEnabled() ) {
+            LOGGER.debug("{} Just Updated Peer Group Membership now {} {} {}", new Object[]{peerGroup.getId(), Arrays.toString(peerGroup.getMembers()), Arrays.toString(peerGroup.getMembersAdded()), Arrays.toString(peerGroup.getMembersRemoved())});
           }
         }
 
