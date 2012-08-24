@@ -30,6 +30,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.json.JSONException;
 import org.apache.sling.commons.json.io.JSONWriter;
+import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.jcr.api.SlingRepository;
 import org.apache.sling.jcr.resource.JcrResourceConstants;
 import org.sakaiproject.nakamura.api.lite.Repository;
@@ -73,7 +74,7 @@ public class FileUtils {
    * @param fileNode
    *          The node that represents the file. This node has to be retrieved via the
    *          normal user his {@link Session session}. If the userID equals
-   *          {@link UserConstants.ANON_USERID} an AccessDeniedException will be thrown.
+   *          {@code UserConstants.ANON_USERID} an AccessDeniedException will be thrown.
    * @param linkPath
    *          The absolute path in JCR where the link should be placed.
    * @param slingRepository
@@ -170,7 +171,9 @@ public class FileUtils {
   /**
    * Writes all the properties of a sakai/file node. Also checks what the permissions are
    * for a session and where the links are.<br/>
-   * Same as calling {@link #writeFileNode(Node, Session, JSONWriter, 0)}
+   * Same as calling
+   * {@link #writeFileNode(javax.jcr.Node, javax.jcr.Session, org.apache.sling.commons.json.io.JSONWriter, int)}
+   * with a maxDepth of 0.
    *
    * @param node
    * @param write
@@ -193,8 +196,9 @@ public class FileUtils {
    * for a session and where the links are.
    *
    * @param node
+   * @param session
    * @param write
-   * @param objectInProgress
+   * @param maxDepth
    *          Whether object creation is in progress. If false, object is started and
    *          ended in this method call.
    * @throws JSONException
@@ -335,21 +339,21 @@ public class FileUtils {
   /**
    * Writes commentCount of content
    *
-   * @param node
+   * @param content
    * @param session
-   * @param write
-   * @throws RepositoryException
+   * @param writer
+   * @throws StorageClientException
    * @throws JSONException
    */
   public static void writeCommentCountProperty(Content content,
-      org.sakaiproject.nakamura.api.lite.Session session, JSONWriter writer, Repository repository) 
+      org.sakaiproject.nakamura.api.lite.Session session, JSONWriter writer)
           throws StorageClientException, JSONException {
 
     int commentCount = 0;
     String COMMENTCOUNT = "commentCount";
 
     if(content.hasProperty(COMMENTCOUNT)){
-      commentCount = (Integer)content.getProperty(COMMENTCOUNT);
+      PropertiesUtil.toInteger(content.getProperty(COMMENTCOUNT), 0);
     } else {
       // no commentCount property on Content, then evaluate count and add property
       Content comments = null;
@@ -361,7 +365,7 @@ public class FileUtils {
         }
         content.setProperty(COMMENTCOUNT, commentCount);
         //save property
-        adminSession = repository.loginAdministrative();
+        adminSession = session.getRepository().loginAdministrative();
         ContentManager adminContentManager = adminSession.getContentManager();
         adminContentManager.update(content);
       } catch (org.sakaiproject.nakamura.api.lite.accesscontrol.AccessDeniedException e) {
@@ -383,10 +387,10 @@ public class FileUtils {
   /**
    * Writes comments of content
    *
-   * @param node
+   * @param content
    * @param session
-   * @param write
-   * @throws RepositoryException
+   * @param writer
+   * @throws StorageClientException
    * @throws JSONException
    */
   public static void writeComments(Content content,
